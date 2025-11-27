@@ -1,0 +1,42 @@
+# Core
+fastapi>=0.95.0,<0.100.0
+uvicorn[standard]>=0.21.0,<0.25.0
+python-multipart>=0.0.6,<0.1.0
+python-dotenv>=1.0.0,<2.0.0
+pydantic>=1.10.0,<2.0.0
+
+# PDF Processing
+# Core PDF libraries with pre-built wheels
+PyMuPDF>=1.22.0,<2.0.0  # Fastest and most reliable
+pdfminer.six>=20221105,<20240000  # Fallback for complex PDFs
+
+# OCR and image processing
+pytesseract>=0.3.10,<0.4.0
+pdf2image>=1.16.3,<2.0.0
+Pillow>=9.5.0,<11.0.0
+
+# Database
+sqlalchemy>=2.0.0,<3.0.0
+databases[sqlite]>=0.7.0,<0.10.0
+alembic>=1.10.0,<2.0.0
+
+# HTTP
+requests>=2.28.0,<3.0.0
+httpx>=0.24.0,<0.26.0
+groq>=0.4.0,<1.0.0
+
+# Utils
+typing-extensions>=4.5.0,<5.0.0
+python-dateutil>=2.8.2,<3.0.0
+
+# Testing
+pytest>=7.3.1,<8.0.0
+pytest-asyncio>=0.21.0,<0.22.0
+httpx>=0.24.0,<0.26.0
+pytest-cov>=4.0.0,<5.0.0
+
+# Development
+black>=23.3.0,<24.0.0
+isort>=5.12.0,<6.0.0
+mypy>=1.1.1,<2.0.0
+flake8>=6.0.0,<7.0.0
