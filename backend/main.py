@@ -17,7 +17,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from db import Base, SessionLocal, engine, get_db
-from extractor import PDFExtractionError, extract_questions_from_pdf
+from extractor import PDFExtractionError, extract_questions_from_pdf, extract_answer_key_from_pdf
 from groq_ai import (
     generate_explanation as groq_generate_explanation,
     generate_feedback as groq_generate_feedback,
@@ -170,6 +170,48 @@ async def upload_pdf(
         saved_count=saved,
         total_parsed=len(parsed_questions),
     )
+
+
+@app.post("/upload-answer-key")
+async def upload_answer_key(
+    file: UploadFile = File(..., description="PDF file containing answer key"),
+):
+    """Upload and validate an answer key PDF using AI"""
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only PDF files are allowed")
+
+    contents = await file.read()
+    if not contents:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Uploaded file is empty")
+
+    logger.info(f"Processing answer key PDF: {file.filename} ({len(contents)} bytes)")
+    
+    try:
+        result = extract_answer_key_from_pdf(contents)
+        
+        if result.get("status") == "success":
+            logger.info(f"✅ Answer key validated: {result.get('message')}")
+            return {
+                "status": "success",
+                "message": result.get("message"),
+                "answer_key": result.get("answer_key"),
+                "file_name": file.filename
+            }
+        else:
+            logger.warning(f"⚠️ Answer key validation failed: {result.get('message')}")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=result.get("message", "Failed to validate answer key")
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error(f"Unexpected error processing answer key: {str(exc)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to process answer key PDF"
+        ) from exc
 
 
 @app.get("/questions", response_model=List[QuestionDTO])

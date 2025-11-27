@@ -1,0 +1,34 @@
+[
+  {
+    "question": "What is the capital of France?",
+    "options": [
+      "Paris",
+      "London",
+      "Berlin",
+      "Rome"
+    ],
+    "correct_option": 0,
+    "explanation": "Paris is the capital of France"
+  },
+  {
+    "question": "ACCA stands for?",
+    "options": [
+      "Association of Chartered Certified Accountants",
+      "American Council of Commerce Administration",
+      "Accounting Committee Corporate Authority",
+      "Allied Chartered Council of Auditors"
+    ],
+    "correct_option": 0,
+    "explanation": "ACCA stands for Association of Chartered Certified Accountants"
+  },
+  {
+    "question": "Which number is a prime?",
+    "options": [
+      "21",
+      "29",
+      "39",
+      "51"
+    ],
+    "correct_option": 0
+  }
+]

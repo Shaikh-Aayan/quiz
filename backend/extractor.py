@@ -7,26 +7,53 @@ from typing import List, Dict, Tuple, Optional, Union, Any
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# Third-party imports
+# Third-party imports - make them optional
+PDF_LIBS_AVAILABLE = True
 try:
     import fitz  # PyMuPDF
-    import pdfplumber
+except ImportError:
+    PDF_LIBS_AVAILABLE = False
+
+try:
     from pdfminer.high_level import extract_text
+except ImportError:
+    PDF_LIBS_AVAILABLE = False
+
+try:
     from pdf2image import convert_from_bytes
+except ImportError:
+    PDF_LIBS_AVAILABLE = False
+
+try:
     import pytesseract
+except ImportError:
+    PDF_LIBS_AVAILABLE = False
+
+try:
     from PIL import Image, UnidentifiedImageError
+except ImportError:
+    PDF_LIBS_AVAILABLE = False
+
+# Optional imports that don't break if missing
+try:
+    import pdfplumber
+except ImportError:
+    pdfplumber = None
+
+try:
+    import pdftotext
+except ImportError:
+    pdftotext = None
+
+try:
     from pdfminer.pdfdocument import PDFDocument
     from pdfminer.pdfparser import PDFParser
     from pdfminer.pdfinterp import PDFPageInterpreter, PDFResourceManager
     from pdfminer.converter import TextConverter
     from pdfminer.layout import LAParams
     from pdfminer.pdfpage import PDFPage
-    import pdftotext
-    PDF_LIBS_AVAILABLE = True
-except ImportError as e:
-    logger = logging.getLogger(__name__)
-    logger.warning(f"Some PDF processing libraries not available: {str(e)}")
-    PDF_LIBS_AVAILABLE = False
+except ImportError:
+    pass
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -114,7 +141,7 @@ def try_pdfminer_extract(file_bytes: bytes) -> str:
         logger.error(f"PDF extraction failed: {str(e)}")
         raise PDFExtractionError(f"Failed to extract text from PDF: {str(e)}")
 
-def ocr_from_pdf_bytes(file_bytes: bytes, dpi: int = 200) -> str:
+def ocr_from_pdf_bytes(file_bytes: bytes, dpi: int = 300) -> str:
     """Extract text from PDF using OCR with improved error handling and performance."""
     if not PDF_LIBS_AVAILABLE:
         raise ImportError("PDF processing libraries are not installed")
@@ -123,58 +150,76 @@ def ocr_from_pdf_bytes(file_bytes: bytes, dpi: int = 200) -> str:
     try:
         # Try to convert PDF to images
         try:
+            logger.info(f"Converting PDF to images at {dpi} DPI...")
             images = convert_from_bytes(
                 file_bytes,
                 dpi=dpi,
-                fmt='jpeg',
+                fmt='png',
                 thread_count=4,
-                grayscale=True,
-                size=(1654, 2339)
+                grayscale=False  # Keep color for better OCR
             )
+            logger.info(f"Successfully converted {len(images)} pages to images")
         except Exception as pdf_convert_err:
             # Poppler might not be installed, try without it
             logger.warning(f"PDF conversion with poppler failed: {str(pdf_convert_err)}")
-            logger.info("Attempting OCR without poppler...")
+            logger.info("Attempting OCR without poppler using PyMuPDF...")
             
             # Try using PyMuPDF instead
             try:
                 import fitz
                 doc = fitz.open(stream=io.BytesIO(file_bytes), filetype="pdf")
                 images = []
+                zoom_factor = dpi / 72  # Convert DPI to zoom factor
                 for page_num in range(len(doc)):
                     page = doc[page_num]
-                    pix = page.get_pixmap(matrix=fitz.Matrix(200/72, 200/72))
+                    pix = page.get_pixmap(matrix=fitz.Matrix(zoom_factor, zoom_factor))
                     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
                     images.append(img)
+                logger.info(f"Successfully converted {len(images)} pages using PyMuPDF")
             except Exception as fitz_err:
                 logger.error(f"PyMuPDF conversion also failed: {str(fitz_err)}")
-                raise PDFExtractionError(f"Could not convert PDF to images. Poppler may not be installed: {str(pdf_convert_err)}")
+                raise PDFExtractionError(f"Could not convert PDF to images: {str(pdf_convert_err)}")
         
-        # Configure Tesseract
+        # Configure Tesseract for better MCQ extraction
         custom_config = r'--oem 3 --psm 6 -c preserve_interword_spaces=1'
         
-        for img in images:
+        for page_num, img in enumerate(images):
             try:
+                logger.info(f"Processing page {page_num + 1} with OCR...")
+                
                 # Preprocess image for better OCR
-                img = img.convert('L')  # Convert to grayscale
+                img_rgb = img.convert('RGB')
                 
                 # Enhance image for better OCR
-                from PIL import ImageEnhance
-                enhancer = ImageEnhance.Contrast(img)
-                img = enhancer.enhance(2.0)  # Increase contrast
+                from PIL import ImageEnhance, ImageFilter
+                
+                # Increase contrast
+                enhancer = ImageEnhance.Contrast(img_rgb)
+                img_rgb = enhancer.enhance(2.5)
+                
+                # Increase brightness slightly
+                enhancer = ImageEnhance.Brightness(img_rgb)
+                img_rgb = enhancer.enhance(1.1)
+                
+                # Sharpen image
+                img_rgb = img_rgb.filter(ImageFilter.SHARPEN)
                 
                 # Perform OCR
-                txt = pytesseract.image_to_string(img, config=custom_config)
+                txt = pytesseract.image_to_string(img_rgb, config=custom_config)
                 if txt.strip():
                     text_pages.append(txt.strip())
+                    logger.info(f"Page {page_num + 1}: Extracted {len(txt)} characters")
+                else:
+                    logger.warning(f"Page {page_num + 1}: No text extracted")
                 
             except Exception as img_err:
-                logger.warning(f"Error processing image: {str(img_err)}")
+                logger.warning(f"Error processing page {page_num + 1}: {str(img_err)}")
                 continue
         
         if not text_pages:
             raise PDFExtractionError("No text could be extracted from PDF using OCR")
-                
+        
+        logger.info(f"OCR extraction complete: {len(text_pages)} pages processed")
         return "\n\n".join(text_pages)
         
     except PDFExtractionError:
@@ -184,21 +229,27 @@ def ocr_from_pdf_bytes(file_bytes: bytes, dpi: int = 200) -> str:
         raise PDFExtractionError(f"OCR processing failed: {str(e)}")
 
 def clean_text(text: str) -> str:
-    """Clean and normalize text for better parsing."""
+    """Clean and normalize text for better parsing - preserves structure."""
     if not text:
         return ""
     
-    # Normalize line endings and whitespace
-    text = ' '.join(text.split())
-    
-    # Remove common OCR artifacts
+    # Remove common OCR artifacts but preserve line structure
     text = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', text)
     
     # Normalize quotes and dashes
-    text = text.replace('"', "''").replace('`', "'").replace('“', "''").replace('”', "''")
+    text = text.replace('"', "'").replace('`', "'").replace('"', "'").replace('"', "'")
     text = text.replace('–', '-').replace('—', '-')
     
-    return text.strip()
+    # Clean up excessive whitespace within lines but preserve line breaks
+    lines = text.split('\n')
+    cleaned_lines = []
+    for line in lines:
+        # Remove leading/trailing whitespace and excessive internal spaces
+        line = re.sub(r'\s+', ' ', line).strip()
+        if line:  # Only keep non-empty lines
+            cleaned_lines.append(line)
+    
+    return '\n'.join(cleaned_lines)
 
 def parse_mcqs_from_text(text: str) -> List[Dict]:
     """Extract MCQs with ultra-robust parsing - handles any format."""
@@ -421,9 +472,16 @@ def extract_questions_from_pdf(file_bytes: bytes, skip_ocr: bool = False) -> Lis
     try:
         logger.info("Starting PDF extraction process...")
         
+        # Initialize text variable
+        text = ""
+        
         # Try PyMuPDF first (fastest and most reliable)
         logger.info("Trying PyMuPDF extraction...")
-        text = extract_with_pymupdf(file_bytes)
+        try:
+            text = extract_with_pymupdf(file_bytes)
+        except Exception as e:
+            logger.warning(f"PyMuPDF extraction failed, will try other methods: {str(e)}")
+            text = ""  # Ensure text is reset if extraction fails
         
         # If text is too short or seems incomplete, try pdfminer
         if not text or len(text.strip()) < 100:
@@ -445,22 +503,33 @@ def extract_questions_from_pdf(file_bytes: bytes, skip_ocr: bool = False) -> Lis
         
         # Try Groq-based extraction first (most reliable when it works)
         logger.info("Trying Groq-based extraction...")
-        mcqs = validate_and_structure_with_groq(text)
+        groq_mcqs = validate_and_structure_with_groq(text)
         
-        if mcqs:
-            logger.info(f"✅ Extracted {len(mcqs)} questions using Groq")
-            return mcqs
-            
-        logger.info("Groq extraction failed or returned no questions, falling back to rule-based parsers...")
+        if groq_mcqs:
+            logger.info(f"✅ Extracted {len(groq_mcqs)} questions using Groq")
+            # Check if Groq might have missed questions by counting question marks
+            question_count = text.count('?')
+            if len(groq_mcqs) < question_count:
+                logger.warning(f"⚠️ Groq found {len(groq_mcqs)} but text has {question_count} questions - may be missing some")
+                logger.info("Falling back to rule-based parsers to find missing questions...")
+            else:
+                return groq_mcqs
+        else:
+            logger.info("Groq extraction returned no questions, falling back to rule-based parsers...")
         
         # Parse the extracted text into MCQs using multiple parsers
         all_mcqs = []
         
+        # Add Groq results if we have them
+        if groq_mcqs:
+            all_mcqs.extend(groq_mcqs)
+        
         # Try each parser and collect results
+        # Note: Aggressive parser disabled as it creates malformed questions
         parsers = [
             ("Primary Parser", parse_mcqs_from_text),
             ("Fallback Parser", fallback_block_parser),
-            ("Aggressive Parser", aggressive_parser)
+            # ("Aggressive Parser", aggressive_parser)  # Disabled - creates malformed questions
         ]
         
         for parser_name, parser_func in parsers:
@@ -475,15 +544,28 @@ def extract_questions_from_pdf(file_bytes: bytes, skip_ocr: bool = False) -> Lis
         
         # If we found MCQs with any parser, use them
         if all_mcqs:
-            # Deduplicate MCQs based on question text
+            # Deduplicate MCQs based on question text (more intelligent deduplication)
             unique_mcqs = {}
             for mcq in all_mcqs:
                 q = mcq['question'].strip()
-                if q and q not in unique_mcqs:
-                    unique_mcqs[q] = mcq
+                # Skip malformed questions (too long, contains multiple questions)
+                if not q or len(q) < 5:
+                    continue
+                # Skip if question contains multiple question markers
+                if q.count('?') > 1:
+                    logger.warning(f"⚠️ Skipping malformed question with multiple markers: {q[:50]}")
+                    continue
+                # Skip if question contains newlines (sign of multiple questions merged)
+                if '\n' in q:
+                    logger.warning(f"⚠️ Skipping malformed question with newlines: {q[:50]}")
+                    continue
+                # Use first 100 chars as dedup key to handle slight variations
+                dedup_key = q[:100].lower()
+                if dedup_key not in unique_mcqs:
+                    unique_mcqs[dedup_key] = mcq
             
             mcqs = list(unique_mcqs.values())
-            logger.info(f"✅ Extracted {len(mcqs)} unique MCQs from text")
+            logger.info(f"✅ Extracted {len(mcqs)} unique MCQs from text (deduplicated from {len(all_mcqs)})")
             
             # Try to identify correct answers for any questions that don't have them
             for mcq in mcqs:
@@ -501,111 +583,95 @@ def extract_questions_from_pdf(file_bytes: bytes, skip_ocr: bool = False) -> Lis
         
         logger.warning("❌ No MCQs could be extracted with any parser")
         return []
-
-def identify_correct_answer_with_groq(question: str, options: List[str]) -> int:
-    """Use Groq to identify the correct answer for a multiple-choice question."""
-    try:
-        from groq_ai import groq_generate_explanation
-        
-        options_str = "\n".join([f"{chr(65+i)}) {opt}" for i, opt in enumerate(options)])
-        
-        prompt = f"""You are an expert at answering multiple-choice questions. 
-For the following question, select the SINGLE BEST answer from the given options.
-
-Question: {question}
-
-Options:
-{options_str}
-
-INSTRUCTIONS:
-1. Analyze the question and all options carefully
-2. If the question is unclear or lacks sufficient information, make your best educated guess
-3. Return ONLY the letter of the correct answer (A, B, C, etc.) in this exact format:
-   ANSWER: X
-   (where X is the letter of the correct option)
-"""
-        
-        response = groq_generate_explanation(prompt).strip()
-        logger.info(f"🤖 Groq identified answer: {response}")
-        
-        # Extract the answer using a more robust pattern
-        match = re.search(r'ANSWER:\s*([A-Z])', response, re.IGNORECASE)
-        if not match:
-            # Try to find just a single letter in the response
-            match = re.search(r'\b([A-Z])\b', response)
-            
-        if match:
-            letter = match.group(1).upper()
-            idx = ord(letter) - ord('A')
-            if 0 <= idx < len(options):
-                logger.info(f"✅ Answer identified: {letter} (index {idx})")
-                return idx
-        
-        logger.warning(f"⚠️ Could not parse answer from: {response}")
-        return 0  # Default to first option if can't determine
         
     except Exception as e:
-        logger.error(f"❌ Error in identify_correct_answer_with_groq: {str(e)}")
-        return 0  # Default to first option on error
+        logger.error(f"❌ Error in extract_questions_from_pdf: {str(e)}")
+        import traceback
+        logger.debug(f"Traceback: {traceback.format_exc()}")
+        return []
 
 
-def validate_and_structure_with_groq(raw_text: str) -> List[Dict]:
-    """Use Groq to validate and structure MCQs from raw text using JSON with enhanced extraction."""
+def validate_and_structure_with_groq(text: str) -> List[Dict]:
+    """Use Groq to validate and structure MCQs from extracted text with enhanced accuracy."""
     try:
-        from groq_ai import groq_generate_explanation
-        import json
+        from groq import Groq
+        import os
         
-        # Take a larger chunk for better context
-        text_chunk = raw_text[:5000]  # Increased from 3000 to 5000 for better context
+        # Initialize Groq client
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            logger.warning("GROQ_API_KEY not set, skipping Groq extraction")
+            return []
         
-        prompt = """You are an expert at extracting multiple-choice questions from text. 
-Extract ALL valid MCQs from the following text and format them as a JSON array.
+        client = Groq(api_key=api_key)
+        
+        # Split text into chunks to avoid token limits
+        max_chunk_size = 3000
+        chunks = [text[i:i+max_chunk_size] for i in range(0, len(text), max_chunk_size)]
+        all_questions = []
+        
+        for chunk_idx, text_chunk in enumerate(chunks):
+            logger.info(f"Processing text chunk {chunk_idx + 1}/{len(chunks)}... ({len(text_chunk)} chars)")
+            logger.debug(f"Chunk content preview: {text_chunk[:200]}...")
+            
+            prompt = f"""You are an expert MCQ extraction system. Your ONLY job is to extract ALL multiple-choice questions from the provided text and return them as valid JSON.
 
-IMPORTANT INSTRUCTIONS:
-1. Extract EVERY question you find, even if some information is missing
-2. Each question MUST have at least 2 options
-3. The 'correct' field MUST be the 0-based index of the correct answer
-4. If the correct answer isn't marked, make your best educated guess
-5. Clean up the text - remove any question numbers, bullet points, or extra whitespace
-6. If an option starts with a letter and parenthesis (like 'A)'), remove that prefix
-7. If the text contains answers separately, match them to the correct questions
+CRITICAL RULES (MUST FOLLOW - NO EXCEPTIONS):
+1. Extract EVERY SINGLE question you find - be thorough and comprehensive - DO NOT SKIP ANY
+2. Questions may be formatted in ANY way - adapt to all formats
+3. ALWAYS return ONLY a valid JSON array - NOTHING ELSE, NO MARKDOWN, NO CODE BLOCKS
+4. Each question MUST have these exact fields: question, options, correct_option, explanation
+5. Count the questions in the text and ensure you extract that many in your response
 
-OUTPUT FORMAT:
+RESPONSE FORMAT (MUST BE VALID JSON - NO MARKDOWN):
 [
-  {
-    "question": "What is the capital of France?",
-    "options": [
-      "Paris",
-      "London",
-      "Berlin",
-      "Madrid"
-    ],
-    "correct": 0,
-    "explanation": "Paris is the capital of France."
-  }
+  {{
+    "question": "Question text without numbers or prefixes",
+    "options": ["Option 1", "Option 2", "Option 3"],
+    "correct_option": 0,
+    "explanation": "Why this answer is correct"
+  }},
+  {{
+    "question": "Another question",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correct_option": 2,
+    "explanation": "Explanation for this answer"
+  }}
 ]
 
-EXAMPLES OF HANDLING DIFFERENT FORMATS:
-1. If you see:
-   "1. What is 2+2?\nA) 3\nB) 4\nC) 5\nAnswer: B"
-   
-   Convert to:
-   {
-     "question": "What is 2+2?",
-     "options": ["3", "4", "5"],
-     "correct": 1,
-     "explanation": "2+2 equals 4."
-   }
+EXTRACTION RULES:
+1. Remove ALL question prefixes: Q1, 1., Question 1, etc.
+2. Remove ALL option markers: A), B), •, 1), -, etc.
+3. Combine multi-line options into single lines
+4. Trim ALL whitespace
+5. Keep 2-6 options per question (remove if more than 6)
+6. correct_option MUST be 0-based index (0=first, 1=second, etc.)
 
-2. If you see questions and answers separately:
-   "Questions:\n1. Capital of France?\n2. 2+2?\nAnswers: 1. A 2. B"
-   
-   Convert to separate question objects with correct answers.
+FINDING CORRECT ANSWERS (PRIORITY ORDER):
+1. Look for explicit markers: "Answer: A", "Correct: B", "Key: C", "*", "✓"
+2. If found, convert letter to 0-based index (A=0, B=1, C=2, D=3, etc.)
+3. If NOT found, use your expert knowledge to determine the best answer
+4. If completely uncertain, default to 0
 
-TEXT TO PROCESS:
-""" + text_chunk + """
+EXAMPLES (FOLLOW EXACTLY):
+Input: "1. What is 2+2?\nA) 3\nB) 4\nC) 5\nAnswer: B"
+Output: {{"question": "What is 2+2?", "options": ["3", "4", "5"], "correct_option": 1, "explanation": "2+2 equals 4"}}
 
-IMPORTANT: Return ONLY valid JSON. No other text or explanation."""
+Input: "Q1: Capital of France?\n• Paris\n• London\n• Berlin"
+Output: {{"question": "Capital of France?", "options": ["Paris", "London", "Berlin"], "correct_option": 0, "explanation": "Paris is the capital of France"}}
+
+Input: "Which planet is largest?\nA) Earth\nB) Jupiter\nC) Saturn\nD) Mars"
+Output: {{"question": "Which planet is largest?", "options": ["Earth", "Jupiter", "Saturn", "Mars"], "correct_option": 1, "explanation": "Jupiter is the largest planet"}}
+
+TEXT TO EXTRACT FROM:
+{text_chunk}
+
+FINAL INSTRUCTIONS:
+- Return ONLY valid JSON array
+- No markdown, no code blocks, no explanations
+- If you cannot extract any questions, return empty array: []
+- VERIFY: Count all questions in the text and ensure your JSON has that many
+- VERIFY: Each question has question, options (array), correct_option (number), explanation (string)"""
 
         logger.info("📤 Sending to Groq for enhanced MCQ extraction...")
         
@@ -613,16 +679,32 @@ IMPORTANT: Return ONLY valid JSON. No other text or explanation."""
         max_retries = 3
         for attempt in range(max_retries):
             try:
-                response = groq_generate_explanation(prompt)
+                message = client.chat.completions.create(
+                    messages=[{"role": "user", "content": prompt}],
+                    model="llama-3.3-70b-versatile",
+                    max_tokens=4096,
+                    temperature=0.3,  # Lower temperature for more consistent extraction
+                )
+                response = message.choices[0].message.content
                 logger.info(f"📥 Groq response length: {len(response)} chars")
+                logger.debug(f"Groq response preview: {response[:300]}...")
                 
                 # Clean up the response to make it valid JSON if needed
                 response = response.strip()
                 if not response.startswith('['):
-                    # Try to find the JSON array in the response
-                    json_match = re.search(r'\[(.|\n)*\]', response)
+                    # Try to find the JSON array in the response (non-greedy)
+                    json_match = re.search(r'\[[\s\S]*?\](?=\s*$|\s*\n)', response)
                     if json_match:
                         response = json_match.group(0)
+                    else:
+                        # Try greedy as fallback
+                        json_match = re.search(r'\[[\s\S]*\]', response)
+                        if json_match:
+                            response = json_match.group(0)
+                
+                # Ensure we have a valid response
+                if not response:
+                    raise ValueError("Empty response from Groq")
                 
                 # Parse the JSON
                 parsed = json.loads(response)
@@ -638,23 +720,28 @@ IMPORTANT: Return ONLY valid JSON. No other text or explanation."""
                         # Clean options (remove A), B), etc. if present)
                         cleaned_options = []
                         for opt in options:
-                            # Remove leading A), B), etc.
-                            opt = re.sub(r'^[A-Za-z][\.\)\s]*', '', opt).strip()
-                            # Remove any remaining leading numbers or bullets
-                            opt = re.sub(r'^[\d\s\.\)\-•]*', '', opt).strip()
-                            if opt:  # Only add non-empty options
+                            # Remove leading A), B), etc. - be careful not to remove first character of actual option
+                            # Only remove if it's a single letter followed by ) or .
+                            opt = re.sub(r'^[A-Za-z][\.\)\s]+', '', opt).strip()
+                            # Remove any remaining leading numbers or bullets (but preserve content)
+                            opt = re.sub(r'^[\d\s\.\)\-•]+', '', opt).strip()
+                            if opt and len(opt) > 0:  # Only add non-empty options
                                 cleaned_options.append(opt)
                         
                         options = cleaned_options
                         
                         # Validate question and options
-                        if not q_text or len(options) < 2:
-                            logger.warning(f"⚠️ Skipping invalid question: {q_text[:50]}...")
+                        if not q_text:
+                            logger.warning(f"⚠️ Skipping question with no text")
+                            continue
+                        if len(options) < 2:
+                            logger.warning(f"⚠️ Skipping question with {len(options)} options (need 2+): {q_text[:50]}...")
+                            logger.debug(f"   Options were: {options}")
                             continue
                         
-                        # Handle correct answer
-                        correct = item.get('correct')
-                        if correct is None or not isinstance(correct, int) or correct >= len(options):
+                        # Handle correct answer - check both 'correct' and 'correct_option'
+                        correct = item.get('correct_option') or item.get('correct')
+                        if correct is None or not isinstance(correct, int) or correct >= len(options) or correct < 0:
                             logger.info(f"❓ No valid answer for: {q_text[:50]}... Using Groq to identify...")
                             correct = identify_correct_answer_with_groq(q_text, options)
                         
@@ -672,10 +759,14 @@ IMPORTANT: Return ONLY valid JSON. No other text or explanation."""
                         continue
                 
                 if questions:
-                    logger.info(f"✅ Successfully extracted {len(questions)} questions")
-                    return questions
-                
-                logger.warning("⚠️ No valid questions found in the response")
+                    logger.info(f"✅ Successfully extracted {len(questions)} questions from chunk {chunk_idx + 1}")
+                    all_questions.extend(questions)
+                    # Count question markers in original text to verify we got them all
+                    question_count = text_chunk.count('?')
+                    if len(questions) < question_count:
+                        logger.warning(f"⚠️ Found {question_count} question marks but only extracted {len(questions)} questions - may be missing some")
+                else:
+                    logger.warning("⚠️ No valid questions found in this chunk")
                 
             except (json.JSONDecodeError, ValueError) as e:
                 logger.warning(f"⚠️ Attempt {attempt + 1}/{max_retries}: JSON parse error: {str(e)}")
@@ -688,6 +779,23 @@ IMPORTANT: Return ONLY valid JSON. No other text or explanation."""
                 if attempt == max_retries - 1:  # Last attempt
                     raise
         
+        # Return all questions from all chunks (with deduplication)
+        if all_questions:
+            # Deduplicate across all chunks
+            unique_questions = {}
+            for q in all_questions:
+                q_text = q.get('question', '').strip()
+                if q_text:
+                    # Use first 100 chars as dedup key
+                    dedup_key = q_text[:100].lower()
+                    if dedup_key not in unique_questions:
+                        unique_questions[dedup_key] = q
+            
+            deduped = list(unique_questions.values())
+            logger.info(f"✅ Total extracted {len(deduped)} unique questions from all chunks (deduplicated from {len(all_questions)})")
+            return deduped
+        
+        logger.warning("⚠️ No questions extracted from any chunk")
         return []
         
     except Exception as e:
@@ -696,11 +804,134 @@ IMPORTANT: Return ONLY valid JSON. No other text or explanation."""
         logger.debug(f"Traceback: {traceback.format_exc()}")
         return []
 
+
+def extract_answer_key_from_pdf(file_bytes: bytes) -> dict:
+    """Extract and validate answer key from PDF using Groq AI."""
+    try:
+        from groq import Groq
+        import os
+        
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            logger.warning("GROQ_API_KEY not set, cannot validate answer key")
+            return {"status": "error", "message": "GROQ_API_KEY not configured"}
+        
+        client = Groq(api_key=api_key)
+        
+        # Extract text from PDF
+        logger.info("Extracting text from answer key PDF...")
+        text = ""
+        
+        try:
+            doc = fitz.open(stream=io.BytesIO(file_bytes), filetype="pdf")
+            text_pages = []
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+                text = page.get_text("text")
+                if text.strip():
+                    text_pages.append(text.strip())
+            text = "\n\n".join(text_pages)
+        except Exception as e:
+            logger.warning(f"PyMuPDF extraction failed: {e}, trying PDFMiner...")
+            try:
+                from pdfminer.high_level import extract_text
+                text = extract_text(io.BytesIO(file_bytes))
+            except Exception as e2:
+                logger.error(f"PDFMiner also failed: {e2}")
+                return {"status": "error", "message": "Could not extract text from answer key PDF"}
+        
+        if not text or len(text.strip()) < 10:
+            return {"status": "error", "message": "Answer key PDF appears to be empty"}
+        
+        logger.info(f"Extracted {len(text)} characters from answer key")
+        
+        # Use Groq to parse and validate the answer key
+        prompt = f"""You are an expert at parsing answer keys. Analyze this answer key document and extract all answers.
+
+TASK: Extract the answer key in a structured format.
+
+RESPONSE FORMAT (MUST BE VALID JSON):
+{{
+  "answers": [
+    {{"question_number": 1, "answer": "A", "explanation": "Optional explanation"}},
+    {{"question_number": 2, "answer": "B", "explanation": "Optional explanation"}},
+    ...
+  ],
+  "total_questions": <number>,
+  "format_notes": "Description of the answer key format found"
+}}
+
+PARSING RULES:
+1. Extract question numbers and their corresponding answers
+2. Answers can be letters (A, B, C, D) or numbers (1, 2, 3, 4)
+3. If explanations are provided, include them
+4. Normalize all answers to uppercase letters (A, B, C, D)
+5. If answer is a number, convert to letter (1->A, 2->B, etc.)
+
+ANSWER KEY TEXT:
+{text[:3000]}
+
+Return ONLY valid JSON. No markdown, no explanations."""
+
+        logger.info("📤 Sending answer key to Groq for validation...")
+        
+        message = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.3-70b-versatile",
+            max_tokens=2048,
+            temperature=0.2,  # Low temperature for consistent parsing
+        )
+        
+        response = message.choices[0].message.content.strip()
+        logger.info(f"📥 Groq response length: {len(response)} chars")
+        
+        # Parse the JSON response
+        try:
+            # Try to find JSON in response
+            if not response.startswith('{'):
+                json_match = re.search(r'\{[\s\S]*\}', response)
+                if json_match:
+                    response = json_match.group(0)
+            
+            answer_key = json.loads(response)
+            
+            logger.info(f"✅ Successfully parsed answer key: {answer_key.get('total_questions', 0)} questions")
+            logger.info(f"   Format: {answer_key.get('format_notes', 'Unknown')}")
+            
+            return {
+                "status": "success",
+                "answer_key": answer_key,
+                "message": f"Successfully extracted answer key with {answer_key.get('total_questions', 0)} answers"
+            }
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse Groq response as JSON: {e}")
+            logger.debug(f"Response was: {response[:500]}")
+            return {
+                "status": "error",
+                "message": "Could not parse answer key format",
+                "raw_response": response[:500]
+            }
+        
+    except Exception as e:
+        logger.error(f"Answer key extraction failed: {str(e)}")
+        import traceback
+        logger.debug(f"Traceback: {traceback.format_exc()}")
+        return {"status": "error", "message": f"Answer key extraction failed: {str(e)}"}
+
+
 def identify_correct_answer_with_groq(question: str, options: List[str]) -> int:
     """Use Groq to identify the correct answer for a multiple-choice question."""
     try:
-        from groq_ai import groq_generate_explanation
+        from groq import Groq
+        import os
         
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            logger.warning("GROQ_API_KEY not set, defaulting to first option")
+            return 0
+        
+        client = Groq(api_key=api_key)
         options_str = "\n".join([f"{chr(65+i)}) {opt}" for i, opt in enumerate(options)])
         
         prompt = f"""You are an expert at answering multiple-choice questions. 
@@ -719,7 +950,13 @@ INSTRUCTIONS:
    (where X is the letter of the correct option)
 """
         
-        response = groq_generate_explanation(prompt).strip()
+        message = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.3-70b-versatile",
+            max_tokens=100,
+            temperature=0.1,  # Very low temperature for consistent answers
+        )
+        response = message.choices[0].message.content.strip()
         logger.info(f"🤖 Groq identified answer: {response}")
         
         # Extract the answer using a more robust pattern
