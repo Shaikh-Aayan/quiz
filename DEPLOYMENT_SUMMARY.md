@@ -125,7 +125,7 @@ In Render dashboard:
 2. Click "Environment"
 3. Add variables:
    ```
-   GROQ_API_KEY=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
+   GROQ_API_KEY=YOUR_GROQ_API_KEY_HERE
    DATABASE_URL=sqlite:///./questions.db
    ALLOWED_ORIGINS=*
    ```

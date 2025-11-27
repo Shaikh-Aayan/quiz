@@ -80,16 +80,16 @@ Plan: Free
 7. Scroll down
 8. Click "Create Web Service"
 9. Wait for deployment (5-10 minutes)
-10. Done! ✅
+10. Done! 
 
-#### 2.4 Add Environment Variables
+#### 2.4 Add Environment Variables on Render
 1. Go to your service dashboard
 2. Click "Environment" (left sidebar)
 3. Click "Add Environment Variable"
 4. Add these variables:
 
 ```
-GROQ_API_KEY = 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
+GROQ_API_KEY = YOUR_GROQ_API_KEY_HERE
 DATABASE_URL = sqlite:///./questions.db
 ALLOWED_ORIGINS = *
 ```
