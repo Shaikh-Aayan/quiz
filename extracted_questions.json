@@ -1,0 +1,466 @@
+[
+  {
+    "question": "The atomic bomb is an example of",
+    "options": [
+      "controlled nuclear fusion",
+      "controlled nuclear fission",
+      "uncontrolled nuclear fusion",
+      "uncontrolled nuclear fission"
+    ],
+    "correct_option": 3,
+    "explanation": "The atomic bomb is an example of uncontrolled nuclear fission"
+  },
+  {
+    "question": "What type of particle or ray is alpha",
+    "options": [
+      "alpha particle",
+      "beta particle",
+      "gamma ray",
+      "X-ray"
+    ],
+    "correct_option": 0,
+    "explanation": "Alpha particles are a type of particle"
+  },
+  {
+    "question": "If the acceleration of a vibrating body is directed towards its mean position and directly proportional to the displacement, then the body is executing",
+    "options": [
+      "random motion",
+      "translatory motion",
+      "circulatory motion",
+      "simple harmonic motion"
+    ],
+    "correct_option": 3,
+    "explanation": ""
+  },
+  {
+    "question": "The total energy of a particle executing simple harmonic motion depends upon I. velocity II. amplitude III. frequency",
+    "options": [
+      "I only",
+      "II only",
+      "I and III",
+      "II and III"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "If a periodic wave of wavelength 0.5 m has a frequency of 2 Hz, then the speed of the wave will be",
+    "options": [
+      "4.0 m/s",
+      "2.5 m/s",
+      "1.5 m/s",
+      "1.0 m/s"
+    ],
+    "correct_option": 3,
+    "explanation": ""
+  },
+  {
+    "question": "Wars on Earth are very noisy affairs but a war in space will be very quiet because",
+    "options": [
+      "space is very far from the Earth",
+      "sound waves cannot travel through a vacuum",
+      "sound waves are blocked by the planets in space"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "Graveness or shrillness of a sound depends on its",
+    "options": [
+      "velocity",
+      "frequency",
+      "amplitude",
+      "wavelength"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "All of the following are the MAJOR sources of noise pollution EXCEPT",
+    "options": [
+      "transportation",
+      "construction sites",
+      "musical instruments",
+      "machines used in industries"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "Short sightedness can be removed by the use of",
+    "options": [
+      "convex lens",
+      "concave lens",
+      "double-convex lens",
+      "concavo-convex lens"
+    ],
+    "correct_option": 1,
+    "explanation": ""
+  },
+  {
+    "question": "When a white coloured light passes through a prism it bends into seven different colours. This bending of colours increases as the",
+    "options": [
+      "frequency decreases",
+      "wavelength decreases",
+      "frequency remains the same"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "Consider the given diagram. The label X is a/ an",
+    "options": [
+      "right angle",
+      "critical angle",
+      "angle of deviation",
+      "angle of reflection"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "A force of attraction is directly proportional to the product of charges and inversely proportional to the square of separation between them is called A. Coulomb\u2019s law.",
+    "options": [
+      "Newton\u2019s law",
+      "Gauss\u2019s law",
+      "Ohm\u2019s law"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "The electric field intensity of a point charge is",
+    "options": [
+      "directly proportional to the distance from the charge",
+      "inversely proportional to the distance from the charge",
+      "directly proportional to the square of the distance from the charge",
+      "inversely proportional to the square of the distance from the charge"
+    ],
+    "correct_option": 3,
+    "explanation": ""
+  },
+  {
+    "question": "Consider, two charges are placed near to each other. The option which is CORRECT for the given charges is that",
+    "options": [
+      "both are positively charged",
+      "both are negatively charged",
+      "P is positively and Q is negatively charged"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "If two capacitors C1 = 6 \u00b5F and C2 = 12 \u00b5F are connected in series, then the equivalent capacitance will be",
+    "options": [
+      "2 \u00b5F",
+      "4 \u00b5F",
+      "6 \u00b5F",
+      "18 \u00b5F"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "The resistance of a conductor does NOT depend on its",
+    "options": [
+      "mass",
+      "length",
+      "resistivity",
+      "cross-sectional area"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "If a 100 Watt bulb glows for 200 hours, then the energy consumed by it will be",
+    "options": [
+      "2 kWh",
+      "20 kWh",
+      "100 kWh",
+      "300 kWh"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "The earth wire in electrical appliance is connected to a",
+    "options": [
+      "fuse",
+      "metal case",
+      "switch button",
+      "plastic handle"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "The factor which is independent of the electromotive force (e.m.f.) induced in the secondary coil of a transformer is the",
+    "options": [
+      "resistance of the primary coil",
+      "voltage applied to the primary coil",
+      "number of turns of the primary coil"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "A current carrying coil is placed in a magnetic field as shown in the given figure. In which direction will the coil move?",
+    "options": [
+      "From X to Y",
+      "Turns about the axis XY"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "The working principle of an AC generator is an example of",
+    "options": [
+      "inductor",
+      "impedance",
+      "mutual induction",
+      "electromagnetic induction"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "The material that is commonly used for thermionic emission in a vacuum tube is",
+    "options": [
+      "silver",
+      "copper",
+      "tungsten",
+      "aluminium"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "The given diagram shows a beam of electrons entering into a region between two charged plates. In which of the following directions will the electrons beam deflect?",
+    "options": [
+      "Upward",
+      "Into the page",
+      "Out of the page"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "The name of the logic gate shown in the given diagram is",
+    "options": [
+      "NOT",
+      "NOR"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "When two inputs, P and Q, of a NAND Gate has an output \u20180\u2019, then",
+    "options": [
+      "P will only be 0",
+      "Q will only be 0",
+      "both P and Q will be 0"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "The given truth table is TRUE for Input A Input B Output 0 0 0 0 1 0 1 0 0 1 1 1",
+    "options": [
+      "OR gate",
+      "NOT gate",
+      "XOR gate"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "In the given diagram, the missing component X of information technology is",
+    "options": [
+      "data",
+      "storage",
+      "processing",
+      "controlling"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "In radio, television and mobile phone, information is sent through space in the form of",
+    "options": [
+      "sound waves",
+      "analog signals",
+      "electrical signals",
+      "electromagnetic waves"
+    ],
+    "correct_option": 3,
+    "explanation": ""
+  },
+  {
+    "question": "The MOST powerful communicating tool in today\u2019s world is",
+    "options": [
+      "radio",
+      "internet",
+      "television"
+    ],
+    "correct_option": 1,
+    "explanation": ""
+  },
+  {
+    "question": "Compact disc (CD) is an information storage device. The stored data in it can be read with the help of",
+    "options": [
+      "X-rays",
+      "laser beam",
+      "microscope",
+      "digital camera. 36. The number of electrons in the isotope of uranium 92U238 is"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "Which one of the following DOES NOT occur in natural radioactivity? A. Changing in mass.",
+    "options": [
+      "Releasing of radiation",
+      "Rearrangement of electrons",
+      "alpha particle",
+      "beta particle"
+    ],
+    "correct_option": 0,
+    "explanation": ""
+  },
+  {
+    "question": "There are 100 answer numbers on the answer sheet. Use answer numbers 1 to 40 only.",
+    "options": [
+      "Choose ON",
+      "On the answer grid black out"
+    ],
+    "correct_option": 1
+  },
+  {
+    "question": "Page 1 of 12",
+    "options": [
+      "GA KHAN UNIVERSITY EXAMINATION BOARD SECONDARY SCHOOL CERTIFICATE",
+      "LASS X",
+      "NNUAL EXAMINATIONS (THEORY) 2025 Physics Paper I Time: 1 hour 10 minutes Marks: 40 INSTRUCTIONS"
+    ],
+    "correct_option": 2
+  },
+  {
+    "question": "You may use a simple calculator if you wish.",
+    "options": [
+      "andidate\u2019s Signature",
+      "KU-EB",
+      "nnual Examinations 2025 for Teaching & Learning only Page 2 of 12 S2502-1721110 1. If the acceleration of a vibrating body is directed towards its mean position and directly proportional to the displacement, then the body is executing A. random motion. B. translatory motion. C.",
+      "irculatory motion. D. simple harmonic motion. 2."
+    ],
+    "correct_option": 3
+  },
+  {
+    "question": "Which of the following pendulums has the maximum time period?",
+    "options": [
+      "mplitude III. frequency A. I only. B. II only. C. I and III. D. II and III. 4. If a periodic wave of wavelength 0.5 m has a frequency of 2 Hz, then the speed of the wave will be A. 4.0 m/s. B. 2.5 m/s. C. 1.5 m/s. D. 1.0 m/s. 5. Wars on Earth are very noisy affairs but a war in space will be very quiet because A. space is very far from the Earth. B. sound waves cannot travel through a vacuum. C. sound waves are blocked by the planets in space. D. sound waves lose energy as they reach the Earth.",
+      "KU-EB",
+      "nnual Examinations 2025 for Teaching & Learning only Page 3 of 12 PLEASE TURN OVER THE PAGE S2502-1721110 6."
+    ],
+    "correct_option": 0
+  },
+  {
+    "question": "Which of the following figures represents the loudest sound with the highest frequency?",
+    "options": [
+      "mplitude. D. wavelength. 8.",
+      "ll of the following are the MAJOR sources of noise pollution EXCEPT A. transportation. B.",
+      "onstruction sites. C. musical instruments. D. machines used in industries. 9.",
+      "onsider the given ray diagram."
+    ],
+    "correct_option": 0
+  },
+  {
+    "question": "Where should an object be placed to get a magnified and erect image?",
+    "options": [
+      "t point F B.",
+      "eyond 2F C.",
+      "etween F and P D.",
+      "etween F and 2F F 2F P",
+      "KU-EB",
+      "nnual Examinations 2025 for Teaching & Learning only Page 4 of 12 S2502-1721110 10. Short sightedness can be removed by the use of A.",
+      "onvex lens. B.",
+      "oncave lens. C.",
+      "ouble-convex lens. D.",
+      "oncavo-convex lens. 11."
+    ],
+    "correct_option": 5
+  },
+  {
+    "question": "When a white coloured light passes through a prism it bends into seven different colours.",
+    "options": [
+      "KU-EB",
+      "nnual Examinations 2025 for Teaching & Learning only Page 5 of 12 PLEASE TURN OVER THE PAGE S2502-1721110 13.",
+      "onsider the given diagram. The label X is a/ an A. right angle. B.",
+      "ritical angle. C.",
+      "ngle of deviation. D.",
+      "ngle of reflection. 14.",
+      "force of attraction is directly proportional to the product of charges and inversely proportional to the square of separation between them is called A.",
+      "oulomb\u2019s law. B. Newton\u2019s law. C. Gauss\u2019s law. D. Ohm\u2019s law. 15. The electric field intensity of a point charge is A.",
+      "irectly proportional to the distance from the charge. B. inversely proportional to the distance from the charge. C.",
+      "irectly proportional to the square of the distance from the charge. D. inversely proportional to the square of the distance from the charge. 16.",
+      "onsider, two charges are placed near to each other. The option which is CORRECT for the given charges is that A.",
+      "oth are positively charged. B.",
+      "oth are negatively charged. C. P is positively and Q is negatively charged. D. P is negatively and Q is positively charged.",
+      "ir Glass Refracted Ray Incident Ray X P Q",
+      "KU-EB",
+      "nnual Examinations 2025 for Teaching & Learning only Page 6 of 12 S2502-1721110",
+      "2",
+      "1",
+      "4",
+      "3 - + 17. If two capacitors C1 = 6 \u00b5F and C2 = 12 \u00b5F are connected in series, then the equivalent",
+      "apacitance will be A. 2 \u00b5F. B. 4 \u00b5F. C. 6 \u00b5F. D. 18 \u00b5F. 18. The resistance of a conductor does NOT depend on its A. mass. B. length. C. resistivity. D.",
+      "ross-sectional area. 19. In the given diagram, all of the following bulbs will NOT glow if we remove bulb A.",
+      "1 B.",
+      "2 C.",
+      "3 D.",
+      "4 20. If a 100 Watt bulb glows for 200 hours, then the energy consumed by it will be A. 2 kWh. B. 20 kWh. C. 100 kWh. D. 300 kWh. 21. The earth wire in electrical appliance is connected to a A. fuse. B. metal case. C. switch button. D. plastic handle. 22. The factor which is independent of the electromotive force (e.m.f.) induced in the secondary",
+      "oil of a transformer is the A. resistance of the primary coil. B. voltage applied to the primary coil. C. number of turns of the primary coil. D. number of turns of the secondary coil.",
+      "KU-EB",
+      "nnual Examinations 2025 for Teaching & Learning only Page 7 of 12 PLEASE TURN OVER THE PAGE S2502-1721110",
+      "urrent",
+      "urrent X Y Magnetic field",
+      "oil 23.",
+      "current carrying coil is placed in a magnetic field as shown in the given figure. In which direction will the coil move? A. From X to Y B. Turns about the axis XY C.",
+      "long the magnetic field D.",
+      "cross the magnetic field 24. In the given diagram, a bar magnet is pushed into a coil of a wire. The coil is connected to a sensitive metre that can detect a small amount of current."
+    ],
+    "correct_option": 0
+  },
+  {
+    "question": "What will happen if the bar magnet is passed through a coil?",
+    "options": [
+      "urrent is detected, but not until the magnet enters the coil. B.",
+      "urrent is detected if the magnet is placed in the coil and held still. C. No current is detected because the circuit does not have a battery in it. D.",
+      "urrent is detected provided the magnet is moving back and forth in the coil. 25. The working principle of an AC generator is an example of A. inductor. B. impedance. C. mutual induction. D.",
+      "lectromagnetic induction. 26.",
+      "transformer will work as a step-up transformer if the number of turns in the primary coil is A. less than in the secondary coil and connected to the DC supply. B. less than in the secondary coil and connected to the AC supply. C. more than in the secondary coil and connected to the AC supply. D. more than in the secondary coil and connected to the DC supply. Magnet In G",
+      "KU-EB",
+      "nnual Examinations 2025 for Teaching & Learning only Page 8 of 12 S2502-1721110 27. The material that is commonly used for thermionic emission in a vacuum tube is A. silver. B.",
+      "opper. C. tungsten. D.",
+      "luminium. 28. The given diagram shows a beam of electrons entering into a region between two charged plates. In which of the following directions will the electrons beam deflect? A. Upward B.",
+      "ownward C. Into the page D. Out of the page 29. The name of the logic gate shown in the given diagram is A. OR B. NOT C. NOR D. NAND 30."
+    ],
+    "correct_option": 3
+  },
+  {
+    "question": "Consider the following nuclear reaction.",
+    "options": [
+      "lpha particle. B.",
+      "eta particle. C. gamma ray. D. X-ray. Paper Steel Lead P Q R S",
+      "KU-EB",
+      "nnual Examinations 2025 for Teaching & Learning only Page 11 of 12",
+      "ND OF PAPER S2502-1721110 40. The atomic bomb is an example of A.",
+      "ontrolled nuclear fusion. B.",
+      "ontrolled nuclear fission. C. uncontrolled nuclear fusion. D. uncontrolled nuclear fission.",
+      "KU-EB",
+      "nnual Examinations 2025 for Teaching & Learning only Page 12 of 12 S2502-1721110",
+      "KU-EB",
+      "nnual Examinations 2025 for Teaching & Learning only"
+    ],
+    "correct_option": 3
+  }
+]
