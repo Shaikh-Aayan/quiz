@@ -16,6 +16,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend code
 COPY backend/ .
 
+# Set environment variables
+ENV GROQ_API_KEY=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
+ENV LOG_LEVEL=INFO
+ENV HOST=0.0.0.0
+ENV PORT=8000
+
 # Expose port
 EXPOSE 8000
 
