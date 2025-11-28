@@ -1080,8 +1080,14 @@
             // Auto-next after 2 seconds
             setTimeout(() => {
                 currentQuestionIndex++;
-                btn.disabled = false; // Re-enable for next question
-                renderCurrentQuestion();
+                
+                // Check if quiz is finished
+                if (currentQuestionIndex >= allQuestions.length) {
+                    finishQuiz();
+                } else {
+                    btn.disabled = false; // Re-enable for next question
+                    renderCurrentQuestion();
+                }
             }, 1500);
         };
 
