@@ -20,11 +20,6 @@ A complete AI-powered MCQ learning platform for ACCA students with automatic PDF
 ### Frontend (GitHub Pages)
 🔗 **https://shaikh-aayan.github.io/quiz**
 
-### Backend (Railway)
-🔗 **https://quiz-production-cf4b.up.railway.app**
-
-### Alternative Frontend (Vercel)
-🔗 **https://acca-mcq-website.vercel.app**
 
 ---
 
