@@ -1279,7 +1279,7 @@ Return ONLY valid JSON. No markdown, no explanations."""
         return {"status": "error", "message": f"Answer key extraction failed: {str(e)}"}
 
 
-def identify_correct_answer_with_groq(question: str, options: List[str]) -> int:
+def identify_correct_answer_with_groq(question: str, options: List[str]) -> Optional[int]:
     """Use Groq to identify the correct answer for a multiple-choice question."""
     try:
         from groq import Groq
@@ -1287,8 +1287,8 @@ def identify_correct_answer_with_groq(question: str, options: List[str]) -> int:
         
         api_key = os.getenv("GROQ_API_KEY")
         if not api_key:
-            logger.warning("GROQ_API_KEY not set, defaulting to first option")
-            return 0
+            logger.debug("GROQ_API_KEY not set, returning None")
+            return None
         
         client = Groq(api_key=api_key)
         options_str = "\n".join([f"{chr(65+i)}) {opt}" for i, opt in enumerate(options)])
@@ -1332,8 +1332,8 @@ INSTRUCTIONS:
                 return idx
         
         logger.warning(f"⚠️ Could not parse answer from: {response}")
-        return 0  # Default to first option if can't determine
+        return None  # Return None if can't determine
         
     except Exception as e:
         logger.error(f"❌ Error in identify_correct_answer_with_groq: {str(e)}")
-        return 0  # Default to first option on error
+        return None  # Return None on error
