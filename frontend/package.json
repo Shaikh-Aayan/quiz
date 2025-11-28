@@ -2,11 +2,13 @@
   "name": "acca-mcq-frontend",
   "version": "1.0.0",
   "private": true,
+  "homepage": "https://shaikh-aayan.github.io/quiz",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "deploy": "gh-pages -d frontend/public"
   },
   "dependencies": {
     "next": "14.0.0",
