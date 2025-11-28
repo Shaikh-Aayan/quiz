@@ -1,4 +1,5 @@
 import io
+import os
 import re
 import logging
 import json
@@ -62,6 +63,169 @@ logger = logging.getLogger(__name__)
 class PDFExtractionError(Exception):
     """Custom exception for PDF extraction errors."""
     pass
+
+def detect_paper_type(text: str) -> str:
+    """Detect the type of exam paper"""
+    text_lower = text.lower()
+    
+    if "physics" in text_lower or "simple harmonic" in text_lower or "acceleration" in text_lower:
+        return "PHYSICS"
+    elif "english" in text_lower or "listening" in text_lower or "reading" in text_lower:
+        return "ENGLISH"
+    elif "mathematics" in text_lower or "algebra" in text_lower:
+        return "MATHEMATICS"
+    else:
+        return "GENERAL"
+
+def parse_english_mcqs(text: str) -> List[Dict]:
+    """
+    Parse MCQs from English exam PDF.
+    Excludes listening questions (no audio) and writing questions (subjective).
+    Only includes reading comprehension questions.
+    """
+    
+    if not text or len(text) < 50:
+        logger.debug("Text too short for English parser")
+        return []
+    
+    results = []
+    lines = text.split('\n')
+    lines = [l.strip() for l in lines]
+    
+    # Track sections
+    in_listening = False
+    in_reading = False
+    in_writing = False
+    
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        
+        # Detect section headers
+        if 'listening' in line.lower() and 'section' in line.lower():
+            in_listening = True
+            in_reading = False
+            in_writing = False
+            logger.debug("Entered LISTENING section - will skip")
+            i += 1
+            continue
+        elif 'reading' in line.lower() and 'section' in line.lower():
+            in_listening = False
+            in_reading = True
+            in_writing = False
+            logger.debug("Entered READING section - will include")
+            i += 1
+            continue
+        elif 'writing' in line.lower() and 'section' in line.lower():
+            in_listening = False
+            in_reading = False
+            in_writing = True
+            logger.debug("Entered WRITING section - will skip")
+            i += 1
+            continue
+        
+        # Skip if in listening or writing section
+        if in_listening or in_writing:
+            i += 1
+            continue
+        
+        # Only process reading section
+        if not in_reading:
+            i += 1
+            continue
+        
+        # Look for question number pattern
+        q_match = re.match(r'^(\d+)\.\s*(.*?)$', line)
+        
+        if not q_match:
+            i += 1
+            continue
+        
+        q_num = int(q_match.group(1))
+        first_line_text = q_match.group(2).strip()
+        
+        # Collect lines until next question number
+        question_block_lines = []
+        
+        if first_line_text:
+            question_block_lines.append(first_line_text)
+        
+        j = i + 1
+        
+        while j < len(lines):
+            next_line = lines[j]
+            
+            # Stop if we hit another question number
+            if re.match(r'^\d+\.\s*', next_line):
+                break
+            
+            # Stop if we hit a section header
+            if any(keyword in next_line.lower() for keyword in ['listening', 'reading', 'writing', 'section']):
+                break
+            
+            if next_line.strip():
+                question_block_lines.append(next_line)
+            
+            j += 1
+        
+        # Join all lines in the block
+        question_block = ' '.join(question_block_lines)
+        
+        # Skip instructions and empty blocks
+        if len(question_block) < 10 or any(keyword in question_block.lower() for keyword in 
+               ['read each question', 'answer the questions', 'answer sheet', 'write anything', 'erase']):
+            i = j
+            continue
+        
+        # Extract options from the block
+        option_pattern = r'([A-D])\.\s*([^A-D]*?)(?=(?:[A-D]\.|$))'
+        option_matches = list(re.finditer(option_pattern, question_block))
+        
+        if len(option_matches) < 2:
+            logger.debug(f"Q{q_num}: Not enough options found")
+            i = j
+            continue
+        
+        # Find where options start
+        first_option_pos = option_matches[0].start()
+        question_text = question_block[:first_option_pos].strip()
+        
+        # Extract options
+        options = []
+        for match in option_matches:
+            opt_text = match.group(2).strip()
+            opt_text = re.sub(r'\s+', ' ', opt_text)
+            opt_text = opt_text.rstrip('.')
+            
+            if len(opt_text) > 2 and len(opt_text) < 200:
+                options.append(opt_text)
+        
+        # Validate and add question
+        if question_text and len(options) >= 2:
+            # Try to identify correct answer using Groq (only if API key is available)
+            correct_option = None
+            groq_api_key = os.getenv("GROQ_API_KEY")
+            
+            if groq_api_key:
+                try:
+                    correct_option = identify_correct_answer_with_groq(question_text, options[:4])
+                except Exception as e:
+                    logger.debug(f"Could not identify answer for Q{q_num}: {str(e)}")
+            
+            results.append({
+                'question': question_text,
+                'options': options[:4],
+                'correct_option': correct_option,
+                'explanation': ''
+            })
+            logger.info(f"✅ Q{q_num}: {question_text[:60]}... | {len(options)} options | Answer: {correct_option}")
+        else:
+            logger.debug(f"Q{q_num}: Invalid - text_len={len(question_text)} opts={len(options)}")
+        
+        i = j
+    
+    logger.info(f"✅ English parser extracted {len(results)} reading questions (excluded listening/writing)")
+    return results
 
 def parse_physics_mcqs_improved(text: str) -> List[Dict]:
     """
@@ -676,23 +840,35 @@ def extract_questions_from_pdf(file_bytes: bytes, skip_ocr: bool = False) -> Lis
         logger.info("Extracting images from PDF...")
         images_by_page = extract_images_from_pdf(file_bytes)
         
-        # Try specialized physics parser first (for exam PDFs with embedded options)
-        # This is the PRIMARY parser for ALL PDFs - it works well!
-        logger.info("Trying improved physics parser (primary parser)...")
-        physics_mcqs = parse_physics_mcqs_improved(text)
+        # Detect paper type
+        paper_type = detect_paper_type(text)
+        logger.info(f"📋 Detected paper type: {paper_type}")
         
-        if physics_mcqs and len(physics_mcqs) >= 5:
-            logger.info(f"✅ Physics parser found {len(physics_mcqs)} MCQs - using this")
+        # Use appropriate parser based on paper type
+        extracted_mcqs = []
+        
+        if paper_type == "ENGLISH":
+            logger.info("Using English parser (excludes listening/writing)...")
+            extracted_mcqs = parse_english_mcqs(text)
+        elif paper_type == "PHYSICS":
+            logger.info("Using Physics parser...")
+            extracted_mcqs = parse_physics_mcqs_improved(text)
+        else:
+            logger.info("Using Physics parser as default...")
+            extracted_mcqs = parse_physics_mcqs_improved(text)
+        
+        if extracted_mcqs and len(extracted_mcqs) >= 5:
+            logger.info(f"✅ Parser found {len(extracted_mcqs)} MCQs - using this")
             # Attach images to questions (if available)
-            for i, mcq in enumerate(physics_mcqs):
+            for i, mcq in enumerate(extracted_mcqs):
                 if i in images_by_page:
                     img_bytes, img_type = images_by_page[i]
                     mcq['image_data'] = img_bytes
                     mcq['image_type'] = img_type
-            return physics_mcqs
+            return extracted_mcqs
         
-        # Fallback: Try Groq-based extraction if physics parser didn't find enough
-        logger.info("Physics parser found < 5 questions, trying Groq...")
+        # Fallback: Try Groq-based extraction if specialized parser didn't find enough
+        logger.info("Specialized parser found < 5 questions, trying Groq...")
         groq_mcqs = validate_and_structure_with_groq(text)
         
         if groq_mcqs and len(groq_mcqs) >= 5:
