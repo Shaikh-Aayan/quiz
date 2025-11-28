@@ -202,9 +202,12 @@ def parse_english_mcqs(text: str) -> List[Dict]:
         
         # Validate and add question
         if question_text and len(options) >= 2:
-            # Don't try to identify answers with Groq - it's unreliable
-            # Just save the question and let users answer it
+            # Try to identify correct answer using Groq (with retry logic)
             correct_option = None
+            try:
+                correct_option = identify_correct_answer_with_groq(question_text, options[:4])
+            except Exception as e:
+                logger.debug(f"Groq failed for Q{q_num}: {str(e)}")
             
             results.append({
                 'question': question_text,
@@ -212,7 +215,7 @@ def parse_english_mcqs(text: str) -> List[Dict]:
                 'correct_option': correct_option,
                 'explanation': ''
             })
-            logger.info(f"✅ Q{q_num}: {question_text[:60]}... | {len(options)} options")
+            logger.info(f"✅ Q{q_num}: {question_text[:60]}... | {len(options)} options | Answer: {correct_option}")
         else:
             logger.debug(f"Q{q_num}: Invalid - text_len={len(question_text)} opts={len(options)}")
         
@@ -326,9 +329,12 @@ def parse_physics_mcqs_improved(text: str) -> List[Dict]:
         
         # Validate and add question
         if question_text and len(options) >= 2:
-            # Don't try to identify answers with Groq - it's unreliable
-            # Just save the question and let users answer it
+            # Try to identify correct answer using Groq (with retry logic)
             correct_option = None
+            try:
+                correct_option = identify_correct_answer_with_groq(question_text, options[:4])
+            except Exception as e:
+                logger.debug(f"Groq failed for Q{q_num}: {str(e)}")
             
             results.append({
                 'question': question_text,
@@ -336,7 +342,7 @@ def parse_physics_mcqs_improved(text: str) -> List[Dict]:
                 'correct_option': correct_option,
                 'explanation': ''
             })
-            logger.info(f"✅ Q{q_num}: {question_text[:60]}... | {len(options)} options")
+            logger.info(f"✅ Q{q_num}: {question_text[:60]}... | {len(options)} options | Answer: {correct_option}")
         else:
             logger.debug(f"Q{q_num}: Invalid - text_len={len(question_text)} opts={len(options)}")
         
@@ -1268,60 +1274,71 @@ Return ONLY valid JSON. No markdown, no explanations."""
 
 
 def identify_correct_answer_with_groq(question: str, options: List[str]) -> Optional[int]:
-    """Use Groq to identify the correct answer for a multiple-choice question."""
-    try:
-        from groq import Groq
-        import os
-        
-        api_key = os.getenv("GROQ_API_KEY")
-        if not api_key:
-            logger.debug("GROQ_API_KEY not set, returning None")
-            return None
-        
-        client = Groq(api_key=api_key)
-        options_str = "\n".join([f"{chr(65+i)}) {opt}" for i, opt in enumerate(options)])
-        
-        prompt = f"""You are an expert at answering multiple-choice questions. 
-For the following question, select the SINGLE BEST answer from the given options.
+    """Use Groq to identify the correct answer for a multiple-choice question with retry logic."""
+    import time
+    from groq import Groq
+    
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        logger.debug("GROQ_API_KEY not set, returning None")
+        return None
+    
+    max_retries = 3
+    retry_delay = 1  # Start with 1 second
+    
+    for attempt in range(max_retries):
+        try:
+            client = Groq(api_key=api_key)
+            options_str = "\n".join([f"{chr(65+i)}) {opt}" for i, opt in enumerate(options)])
+            
+            prompt = f"""Answer this multiple-choice question by selecting the BEST option.
 
 Question: {question}
 
 Options:
 {options_str}
 
-INSTRUCTIONS:
-1. Analyze the question and all options carefully
-2. If the question is unclear or lacks sufficient information, make your best educated guess
-3. Return ONLY the letter of the correct answer (A, B, C, etc.) in this exact format:
-   ANSWER: X
-   (where X is the letter of the correct option)
-"""
-        
-        message = client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
-            model="llama-3.3-70b-versatile",
-            max_tokens=100,
-            temperature=0.1,  # Very low temperature for consistent answers
-        )
-        response = message.choices[0].message.content.strip()
-        logger.info(f"🤖 Groq identified answer: {response}")
-        
-        # Extract the answer using a more robust pattern
-        match = re.search(r'ANSWER:\s*([A-Z])', response, re.IGNORECASE)
-        if not match:
-            # Try to find just a single letter in the response
-            match = re.search(r'\b([A-Z])\b', response)
+Respond with ONLY: ANSWER: A (or B, C, D, etc.)"""
             
-        if match:
-            letter = match.group(1).upper()
-            idx = ord(letter) - ord('A')
-            if 0 <= idx < len(options):
-                logger.info(f"✅ Answer identified: {letter} (index {idx})")
-                return idx
-        
-        logger.warning(f"⚠️ Could not parse answer from: {response}")
-        return None  # Return None if can't determine
-        
-    except Exception as e:
-        logger.error(f"❌ Error in identify_correct_answer_with_groq: {str(e)}")
-        return None  # Return None on error
+            message = client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model="llama-3.3-70b-versatile",
+                max_tokens=50,
+                temperature=0.1,
+            )
+            response = message.choices[0].message.content.strip()
+            logger.debug(f"🤖 Groq response: {response}")
+            
+            # Extract the answer
+            match = re.search(r'ANSWER:\s*([A-Z])', response, re.IGNORECASE)
+            if not match:
+                match = re.search(r'\b([A-Z])\b', response)
+                
+            if match:
+                letter = match.group(1).upper()
+                idx = ord(letter) - ord('A')
+                if 0 <= idx < len(options):
+                    logger.info(f"✅ Answer: {letter} (index {idx})")
+                    return idx
+            
+            logger.warning(f"⚠️ Could not parse: {response}")
+            return None
+            
+        except Exception as e:
+            error_str = str(e).lower()
+            
+            # Check for rate limit
+            if "429" in error_str or "rate" in error_str or "too many" in error_str:
+                if attempt < max_retries - 1:
+                    logger.warning(f"⏱️ Rate limited, retrying in {retry_delay}s (attempt {attempt+1}/{max_retries})")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                    continue
+                else:
+                    logger.error(f"❌ Rate limited after {max_retries} attempts")
+                    return None
+            else:
+                logger.error(f"❌ Groq error: {str(e)}")
+                return None
+    
+    return None
