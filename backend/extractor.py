@@ -168,13 +168,20 @@ def parse_physics_mcqs_improved(text: str) -> List[Dict]:
         
         # Validate and add question
         if question_text and len(options) >= 2:
+            # Try to identify correct answer using Groq
+            correct_option = None
+            try:
+                correct_option = identify_correct_answer_with_groq(question_text, options[:4])
+            except Exception as e:
+                logger.debug(f"Could not identify answer for Q{q_num}: {str(e)}")
+            
             results.append({
                 'question': question_text,
                 'options': options[:4],  # Max 4 options
-                'correct_option': None,
+                'correct_option': correct_option,
                 'explanation': ''
             })
-            logger.info(f"✅ Q{q_num}: {question_text[:60]}... | {len(options)} options")
+            logger.info(f"✅ Q{q_num}: {question_text[:60]}... | {len(options)} options | Answer: {correct_option}")
         else:
             logger.debug(f"Q{q_num}: Invalid - text_len={len(question_text)} opts={len(options)}")
         
@@ -667,8 +674,8 @@ def extract_questions_from_pdf(file_bytes: bytes, skip_ocr: bool = False) -> Lis
         images_by_page = extract_images_from_pdf(file_bytes)
         
         # Try specialized physics parser first (for exam PDFs with embedded options)
-        # This is the PRIMARY parser for exam PDFs
-        logger.info("Trying improved physics parser (for exam PDFs)...")
+        # This is the PRIMARY parser for ALL PDFs - it works well!
+        logger.info("Trying improved physics parser (primary parser)...")
         physics_mcqs = parse_physics_mcqs_improved(text)
         
         if physics_mcqs and len(physics_mcqs) >= 5:
