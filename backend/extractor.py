@@ -3,6 +3,7 @@ import re
 import logging
 import json
 import time
+import base64
 from typing import List, Dict, Tuple, Optional, Union, Any
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -536,6 +537,46 @@ def aggressive_parser(text: str) -> List[Dict]:
     
     return results
 
+def extract_images_from_pdf(file_bytes: bytes) -> Dict[int, Tuple[bytes, str]]:
+    """
+    Extract images from PDF and return as dict: {page_number: (image_bytes, image_type)}
+    """
+    images_by_page = {}
+    
+    try:
+        doc = fitz.open(stream=io.BytesIO(file_bytes), filetype="pdf")
+        
+        for page_num in range(len(doc)):
+            page = doc[page_num]
+            image_list = page.get_images()
+            
+            if image_list:
+                for img_index, img in enumerate(image_list):
+                    try:
+                        xref = img[0]
+                        pix = fitz.Pixmap(doc, xref)
+                        
+                        # Convert to PNG
+                        if pix.n - pix.alpha < 4:  # GRAY or RGB
+                            img_bytes = pix.tobytes("png")
+                        else:  # CMYK
+                            pix = fitz.Pixmap(fitz.csRGB, pix)
+                            img_bytes = pix.tobytes("png")
+                        
+                        images_by_page[page_num] = (img_bytes, "png")
+                        logger.info(f"✅ Extracted image from page {page_num + 1}")
+                        break  # Take first image per page
+                    except Exception as e:
+                        logger.debug(f"Error extracting image from page {page_num}: {str(e)}")
+                        continue
+        
+        logger.info(f"✅ Extracted {len(images_by_page)} images from PDF")
+        return images_by_page
+    
+    except Exception as e:
+        logger.warning(f"Image extraction failed: {str(e)}")
+        return {}
+
 def extract_questions_from_pdf(file_bytes: bytes, skip_ocr: bool = False) -> List[Dict]:
     """Main function to extract questions from PDF using multiple methods."""
     if not PDF_LIBS_AVAILABLE:
@@ -612,6 +653,10 @@ def extract_questions_from_pdf(file_bytes: bytes, skip_ocr: bool = False) -> Lis
         logger.info("Cleaning and normalizing extracted text...")
         text = clean_text(text)
         
+        # Extract images from PDF
+        logger.info("Extracting images from PDF...")
+        images_by_page = extract_images_from_pdf(file_bytes)
+        
         # Try specialized physics parser first (for exam PDFs with embedded options)
         # This is the PRIMARY parser for exam PDFs
         logger.info("Trying improved physics parser (for exam PDFs)...")
@@ -619,6 +664,12 @@ def extract_questions_from_pdf(file_bytes: bytes, skip_ocr: bool = False) -> Lis
         
         if physics_mcqs and len(physics_mcqs) >= 5:
             logger.info(f"✅ Physics parser found {len(physics_mcqs)} MCQs - using this")
+            # Attach images to questions (if available)
+            for i, mcq in enumerate(physics_mcqs):
+                if i in images_by_page:
+                    img_bytes, img_type = images_by_page[i]
+                    mcq['image_data'] = img_bytes
+                    mcq['image_type'] = img_type
             return physics_mcqs
         
         # Fallback: Try Groq-based extraction if physics parser didn't find enough
@@ -627,6 +678,12 @@ def extract_questions_from_pdf(file_bytes: bytes, skip_ocr: bool = False) -> Lis
         
         if groq_mcqs and len(groq_mcqs) >= 5:
             logger.info(f"✅ Extracted {len(groq_mcqs)} questions using Groq")
+            # Attach images to questions (if available)
+            for i, mcq in enumerate(groq_mcqs):
+                if i in images_by_page:
+                    img_bytes, img_type = images_by_page[i]
+                    mcq['image_data'] = img_bytes
+                    mcq['image_type'] = img_type
             return groq_mcqs
         
         # Final fallback: Try primary parser only (NOT fallback parser - it adds garbage)
@@ -678,6 +735,13 @@ def extract_questions_from_pdf(file_bytes: bytes, skip_ocr: bool = False) -> Lis
                     except Exception as e:
                         logger.warning(f"Failed to identify correct answer: {str(e)}")
                         mcq['correct_option'] = 0  # Default to first option
+            
+            # Attach images to questions (if available)
+            for i, mcq in enumerate(mcqs):
+                if i in images_by_page:
+                    img_bytes, img_type = images_by_page[i]
+                    mcq['image_data'] = img_bytes
+                    mcq['image_type'] = img_type
             
             return mcqs
         

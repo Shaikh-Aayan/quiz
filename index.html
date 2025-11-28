@@ -850,6 +850,16 @@
             const q = allQuestions[currentQuestionIndex];
             const slideContent = document.getElementById("slideContent");
             
+            // Build image section if image exists
+            let imageSection = '';
+            if (q.image_url) {
+                imageSection = `
+                    <div class="mb-6 border border-cyan-500/30 rounded-lg p-4 bg-black/50">
+                        <img src="${q.image_url}" alt="Question diagram" class="max-w-full h-auto rounded-lg mx-auto" style="max-height: 400px;">
+                    </div>
+                `;
+            }
+            
             slideContent.innerHTML = `
                 <div class="flex items-start justify-between mb-6">
                     <div>
@@ -857,6 +867,8 @@
                         <p class="text-2xl font-semibold text-gray-100">${escapeHtml(q.question)}</p>
                     </div>
                 </div>
+                
+                ${imageSection}
                 
                 <div class="space-y-3 mb-6" id="options-container">
                     ${(q.options || []).map((opt, i) => `
