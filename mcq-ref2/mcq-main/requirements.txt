@@ -1,4 +1,0 @@
-openai
-PyMuPDF
-python-dotenv
-datasets
