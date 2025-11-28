@@ -65,6 +65,7 @@ class QuestionDTO(BaseModel):
     explanation: Optional[str]
     source_file: Optional[str]
     page_no: Optional[int]
+    image_url: Optional[str] = None  # Base64 encoded image data URL
 
     class Config:
         orm_mode = True
@@ -154,6 +155,8 @@ async def upload_pdf(
                 explanation=record.get("explanation"),
                 source_file=file.filename,
                 page_no=record.get("page_no"),
+                image_data=record.get("image_data"),  # Store image binary data
+                image_type=record.get("image_type"),  # Store image type (png, jpg, etc)
             )
             db.add(question)
             saved += 1
