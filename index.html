@@ -5,104 +5,443 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aayan MCQ Hub - AI Powered Learning</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { scrollbar-width: thin; scrollbar-color: #4f46e5 #1f2937; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1f2937; }
-        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 4px; }
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #00ffff #000000;
+        }
         
-        body { background: #0f172a; color: #e0e7ff; font-family: Inter, sans-serif; }
-        .fade-in { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
         
-        .slide-in { animation: slideIn 0.5s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; } }
+        ::-webkit-scrollbar-track {
+            background: #000000;
+        }
         
-        .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; display: inline-flex; align-items: center; gap: 0.5rem; }
-        .btn-primary { background: #4f46e5; color: white; }
-        .btn-primary:hover { background: #4338ca; }
-        .btn-success { background: #10b981; color: white; }
-        .btn-success:hover { background: #059669; }
-        .btn-secondary { background: #374151; color: #e5e7eb; border: 1px solid #4b5563; }
-        .btn-secondary:hover { background: #1f2937; }
-        .btn-danger { background: #ef4444; color: white; }
-        .btn-danger:hover { background: #dc2626; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        ::-webkit-scrollbar-thumb {
+            background: #00ffff;
+            border-radius: 4px;
+        }
         
-        .card { background: #1e293b; border: 1px solid #334155; padding: 1.5rem; border-radius: 0.75rem; }
-        .progress-bar { height: 0.5rem; background: #334155; border-radius: 9999px; overflow: hidden; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #4f46e5, #a855f7); transition: width 0.3s; }
+        body {
+            background: #000000;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            overflow-x: hidden;
+        }
         
-        .option-neutral { 
-            background: #1e293b; 
-            border-left: 4px solid #475569; 
-            padding: 1rem; 
-            border-radius: 0.5rem; 
-            cursor: pointer; 
-            transition: all 0.2s ease-in-out;
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.6s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(25px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary {
+            background: #000000;
+            color: #00ffff;
+            border: 1px solid #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .btn-primary:hover {
+            background: rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: #000000;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+        
+        .btn-success:hover {
+            background: rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #111111;
+            color: #ffffff;
+            border: 1px solid #444444;
+        }
+        
+        .btn-secondary:hover {
+            background: #222222;
+            border: 1px solid #666666;
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: #000000;
+            color: #ff0000;
+            border: 1px solid #ff0000;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+        
+        .btn-danger:hover {
+            background: rgba(255, 0, 0, 0.1);
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .card {
+            background: #111111;
+            border: 1px solid #333333;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #00ffff, #ff00ff, #00ff00);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+        }
+        
+        .progress-bar {
+            height: 0.5rem;
+            background: #222222;
+            border-radius: 9999px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ffff, #ff00ff);
+            transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+        
+        .option-neutral {
+            background: #111111;
+            border-left: 4px solid #444444;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
             margin-bottom: 0.5rem;
-        }
-        .option-neutral:hover { 
-            background: #2d3748; 
-            transform: translateX(2px);
-        }
-        .option-selected { 
-            background: #312e81; 
-            border-left-color: #4f46e5;
-            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
-        }
-        .option-correct { 
-            background: #064e3b; 
-            border-left-color: #10b981; 
-            color: #d1fae5;
-            animation: pulse-green 1s ease-in-out;
-        }
-        .option-wrong { 
-            background: #7f1d1d; 
-            border-left-color: #ef4444; 
-            color: #fee2e2;
-            animation: shake 0.5s ease-in-out;
-        }
-        .show-correct-answer {
-            background: #064e3b !important;
-            border-left-color: #10b981 !important;
-            color: #d1fae5 !important;
-            animation: pulse-green 1s ease-in-out infinite alternate;
+            position: relative;
+            overflow: hidden;
         }
         
-        .badge { display: inline-block; padding: 0.375rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; background: rgba(79, 70, 229, 0.2); color: #818cf8; }
-        .stat-box { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #334155; padding: 1rem; border-radius: 0.5rem; text-align: center; }
-        .loading-spinner { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .option-neutral::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s;
+        }
+        
+        .option-neutral:hover {
+            background: #1a1a1a;
+            transform: translateX(5px);
+            border-left-color: #666666;
+        }
+        
+        .option-neutral:hover::before {
+            transform: translateX(100%);
+        }
+        
+        .option-selected {
+            background: #1a1a1a;
+            border-left-color: #00ffff;
+            box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.3);
+        }
+        
+        .option-correct {
+            background: rgba(0, 255, 0, 0.1);
+            border-left-color: #00ff00;
+            color: #ffffff;
+            animation: pulse-green 1.5s ease-in-out;
+        }
+        
+        .option-wrong {
+            background: rgba(255, 0, 0, 0.1);
+            border-left-color: #ff0000;
+            color: #ffffff;
+            animation: shake 0.6s ease-in-out;
+        }
+        
+        .show-correct-answer {
+            background: rgba(0, 255, 0, 0.1) !important;
+            border-left-color: #00ff00 !important;
+            color: #ffffff !important;
+            animation: pulse-green 1.5s ease-in-out infinite alternate;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            background: rgba(0, 255, 255, 0.1);
+            color: #00ffff;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            box-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+        }
+        
+        .stat-box {
+            background: #111111;
+            border: 1px solid #333333;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            transition: transform 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, transparent, rgba(0, 255, 255, 0.05), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .stat-box:hover {
+            transform: translateY(-5px);
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+        
+        .stat-box:hover::before {
+            opacity: 1;
+        }
+        
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
         
         @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 255, 0, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 15px rgba(0, 255, 0, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 255, 0, 0);
+            }
         }
         
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
-            20%, 40%, 60%, 80% { transform: translateX(2px); }
+            0%, 100% {
+                transform: translateX(0);
+            }
+            10%, 30%, 50%, 70%, 90% {
+                transform: translateX(-5px);
+            }
+            20%, 40%, 60%, 80% {
+                transform: translateX(5px);
+            }
+        }
+        
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+            100% {
+                transform: translateY(0px);
+            }
+        }
+        
+        .neon-icon {
+            font-size: 1.5rem;
+            color: #00ffff;
+            filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.7));
+        }
+        
+        .nav-glow {
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            border-bottom: 1px solid #00ffff;
+        }
+        
+        .text-glow {
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+        }
+        
+        .neon-strip {
+            height: 3px;
+            background: linear-gradient(90deg, #00ffff, #ff00ff, #00ff00);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+            margin: 10px 0;
+        }
+        
+        .grid-pattern {
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .input-field {
+            background: #111111;
+            border: 1px solid #333333;
+            color: #ffffff;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+        
+        .neon-pulse {
+            animation: neon-pulse 2s infinite alternate;
+        }
+        
+        @keyframes neon-pulse {
+            from {
+                box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+            }
+            to {
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.8), 0 0 20px rgba(0, 255, 255, 0.6);
+            }
         }
     </style>
 </head>
-<body class="min-h-screen">
-    <nav class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700 sticky top-0 z-50">
+<body class="min-h-screen grid-pattern">
+    <nav class="bg-black border-b border-cyan-500 sticky top-0 z-50 nav-glow">
         <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <span class="text-3xl">🎯</span>
+                <div class="relative">
+                    <span class="text-3xl floating">🧠</span>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+                </div>
                 <div>
-                    <h1 class="text-2xl font-bold text-indigo-400">Aayan MCQ Hub</h1>
+                    <h1 class="text-2xl font-bold text-cyan-400 text-glow">Aayan MCQ Hub</h1>
                     <p class="text-xs text-gray-400">AI-Powered Learning</p>
                 </div>
             </div>
             <div class="flex items-center gap-2 text-sm">
                 <span class="text-gray-400">Status:</span>
                 <span class="flex items-center gap-1">
-                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                    <span class="text-emerald-400">Connected</span>
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <span class="text-green-400">AI Connected</span>
                 </span>
             </div>
         </div>
@@ -110,44 +449,63 @@
 
     <main class="max-w-6xl mx-auto p-6">
         <!-- Upload Section -->
-        <div class="card fade-in mb-8">
+        <div class="card fade-in mb-8 neon-pulse">
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h2 class="text-2xl font-bold mb-1">📄 Upload Past Paper</h2>
-                    <p class="text-gray-400 text-sm">Extract MCQs automatically using AI</p>
+                    <h2 class="text-2xl font-bold mb-1 flex items-center gap-2">
+                        <i class="neon-icon fas fa-file-upload"></i>
+                        Upload Past Paper
+                    </h2>
+                    <p class="text-gray-400 text-sm">Extract MCQs automatically using advanced AI</p>
                 </div>
-                <span class="text-4xl">📚</span>
+                <span class="text-4xl floating">📚</span>
             </div>
             
             <form id="uploadForm">
                 <div class="mb-6">
-                    <input type="file" id="pdfFile" accept="application/pdf" class="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-gray-100" placeholder="Choose PDF file...">
-                    <p class="text-xs text-gray-500 mt-2">Supported: PDF files</p>
+                    <div class="relative">
+                        <input type="file" id="pdfFile" accept="application/pdf" class="input-field w-full">
+                        <div class="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <i class="fas fa-file-pdf text-cyan-400"></i>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                        <i class="fas fa-info-circle text-cyan-400"></i>
+                        Supported: PDF files (Max 10MB)
+                    </p>
                 </div>
 
                 <!-- Answer Key Input -->
                 <div class="mb-6">
-                    <label class="text-sm text-gray-300 mb-2 block">Answer Key (Optional - leave blank to ask Groq)</label>
-                    <textarea id="answerKeyInput" class="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-gray-100" placeholder="Format: Q1:A, Q2:B, Q3:C... or leave empty" rows="2"></textarea>
+                    <label class="text-sm text-gray-300 mb-2 block flex items-center gap-1">
+                        <i class="fas fa-key text-yellow-400"></i>
+                        Answer Key (Optional - leave blank to ask AI)
+                    </label>
+                    <textarea id="answerKeyInput" class="input-field w-full" placeholder="Format: Q1:A, Q2:B, Q3:C... or leave empty for AI detection" rows="2"></textarea>
                 </div>
                 
                 <!-- Upload Progress -->
                 <div id="uploadProgress" style="display:none;" class="mb-6">
                     <div class="flex justify-between items-center mb-2">
-                        <span class="text-sm text-gray-400">Uploading...</span>
-                        <span id="uploadPercent" class="text-sm font-semibold text-indigo-400">0%</span>
+                        <span class="text-sm text-gray-400 flex items-center gap-1">
+                            <i class="fas fa-sync-alt loading-spinner text-cyan-400"></i>
+                            Processing with AI...
+                        </span>
+                        <span id="uploadPercent" class="text-sm font-semibold text-cyan-400">0%</span>
                     </div>
                     <div class="progress-bar">
                         <div class="progress-fill" id="uploadBar" style="width: 0%"></div>
                     </div>
                 </div>
                 
-                <div class="flex gap-3 mb-4">
+                <div class="flex gap-3 mb-4 flex-wrap">
                     <button type="submit" class="btn btn-success" id="uploadBtn">
-                        <span>⬆️</span> Upload & Extract
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        Upload & Extract
                     </button>
                     <button type="button" class="btn btn-secondary" id="resetUploadBtn">
-                        <span>🔄</span> Reset
+                        <i class="fas fa-redo"></i>
+                        Reset
                     </button>
                 </div>
                 
@@ -157,17 +515,29 @@
 
         <!-- Stats Section -->
         <section class="mb-8">
-            <h2 class="text-xl font-bold mb-4">📊 Dashboard</h2>
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="neon-icon fas fa-chart-bar"></i>
+                Learning Dashboard
+            </h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="stat-box">
+                    <div class="flex justify-center mb-2">
+                        <i class="fas fa-question-circle text-3xl text-cyan-400"></i>
+                    </div>
                     <p class="text-gray-400 text-sm mb-2">Total Questions</p>
-                    <p class="text-3xl font-bold text-indigo-400" id="totalQuestions">0</p>
+                    <p class="text-3xl font-bold text-cyan-400" id="totalQuestions">0</p>
                 </div>
                 <div class="stat-box">
+                    <div class="flex justify-center mb-2">
+                        <i class="fas fa-check-circle text-3xl text-green-400"></i>
+                    </div>
                     <p class="text-gray-400 text-sm mb-2">Answered</p>
-                    <p class="text-3xl font-bold text-emerald-400" id="answeredQuestions">0</p>
+                    <p class="text-3xl font-bold text-green-400" id="answeredQuestions">0</p>
                 </div>
                 <div class="stat-box">
+                    <div class="flex justify-center mb-2">
+                        <i class="fas fa-star text-3xl text-purple-400"></i>
+                    </div>
                     <p class="text-gray-400 text-sm mb-2">Correct</p>
                     <p class="text-3xl font-bold text-purple-400" id="correctQuestions">0</p>
                 </div>
@@ -177,17 +547,24 @@
         <!-- Quiz Section -->
         <section id="quizSection" style="display:none;" class="fade-in">
             <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold">🧠 Practice Quiz</h2>
+                <h2 class="text-2xl font-bold flex items-center gap-2">
+                    <i class="neon-icon fas fa-brain"></i>
+                    AI Quiz Challenge
+                </h2>
                 <button class="btn btn-secondary text-sm" id="resetQuizBtn">
-                    <span>🔄</span> New Quiz
+                    <i class="fas fa-sync-alt"></i>
+                    New Quiz
                 </button>
             </div>
             
             <!-- Quiz Progress -->
             <div class="card mb-6">
                 <div class="flex justify-between items-center mb-3">
-                    <span class="text-sm text-gray-400">Progress</span>
-                    <span id="quizProgress" class="text-sm font-semibold text-indigo-400">0/0</span>
+                    <span class="text-sm text-gray-400 flex items-center gap-1">
+                        <i class="fas fa-tasks text-cyan-400"></i>
+                        Progress
+                    </span>
+                    <span id="quizProgress" class="text-sm font-semibold text-cyan-400">0/0</span>
                 </div>
                 <div class="progress-bar">
                     <div class="progress-fill" id="quizProgressBar" style="width: 0%"></div>
@@ -202,34 +579,45 @@
             <!-- Navigation Buttons -->
             <div class="flex gap-3 mt-6 justify-between flex-wrap">
                 <button class="btn btn-secondary" id="prevBtn" style="display:none;">
-                    <span>⬅️</span> Previous
+                    <i class="fas fa-arrow-left"></i>
+                    Previous
                 </button>
                 <button class="btn btn-primary" id="submitCurrentBtn">
-                    <span>✅</span> Submit & Next
+                    <i class="fas fa-check"></i>
+                    Submit & Next
                 </button>
                 <button class="btn btn-success" id="finishBtn" style="display:none;">
-                    <span>🏁</span> End Test
+                    <i class="fas fa-flag-checkered"></i>
+                    End Test
                 </button>
             </div>
 
             <!-- Action Buttons -->
             <div class="flex gap-3 mt-4 justify-center flex-wrap">
                 <button class="btn btn-secondary text-sm" id="clearAllBtn">
-                    <span>🗑️</span> Clear All
+                    <i class="fas fa-trash-alt"></i>
+                    Clear All
                 </button>
             </div>
         </section>
 
         <!-- Empty State -->
         <section id="emptyState" class="card text-center py-12">
-            <p class="text-4xl mb-4">📝</p>
-            <p class="text-gray-400 mb-4">No questions yet. Upload a PDF to get started!</p>
+            <p class="text-5xl mb-4 floating">📝</p>
+            <h3 class="text-xl font-bold text-gray-300 mb-2">Ready to Begin Your Journey?</h3>
+            <p class="text-gray-400 mb-6">Upload a PDF to start your AI-powered learning experience!</p>
+            <div class="flex justify-center gap-2 text-cyan-400">
+                <i class="fas fa-robot text-2xl"></i>
+                <i class="fas fa-bolt text-2xl"></i>
+                <i class="fas fa-atom text-2xl"></i>
+            </div>
         </section>
     </main>
 
-    <footer class="border-t border-slate-700 mt-12 py-8 text-center text-gray-500 text-sm">
-        <p class="text-lg font-semibold text-indigo-400 mb-2">🎯 Aayan MCQ Hub</p>
-        <p class="text-gray-400">© 2025 | Backend: <span class="text-emerald-400">✓ Connected</span></p>
+    <footer class="border-t border-cyan-500/30 mt-12 py-8 text-center text-gray-500 text-sm">
+        <p class="text-lg font-semibold text-cyan-400 mb-2">🧠 Aayan MCQ Hub</p>
+        <p class="text-gray-400 mb-1">© 2025 | AI-Powered Learning Platform</p>
+        <p class="text-gray-400">Backend: <span class="text-green-400 flex items-center justify-center gap-1"><i class="fas fa-circle text-xs"></i> Connected</span></p>
     </footer>
 
     <script>
