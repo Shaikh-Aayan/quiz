@@ -80,8 +80,8 @@ def detect_paper_type(text: str) -> str:
 def parse_english_mcqs(text: str) -> List[Dict]:
     """
     Parse MCQs from English exam PDF.
-    Excludes listening questions (no audio) and writing questions (subjective).
-    Only includes reading comprehension questions.
+    Excludes listening questions (no audio).
+    Includes reading comprehension and writing questions (Groq can identify answers).
     """
     
     if not text or len(text) < 50:
@@ -106,7 +106,7 @@ def parse_english_mcqs(text: str) -> List[Dict]:
             in_listening = True
             in_reading = False
             in_writing = False
-            logger.debug("Entered LISTENING section - will skip")
+            logger.debug("Entered LISTENING section - will skip (no audio)")
             i += 1
             continue
         elif 'reading' in line.lower() and 'section' in line.lower():
@@ -120,17 +120,17 @@ def parse_english_mcqs(text: str) -> List[Dict]:
             in_listening = False
             in_reading = False
             in_writing = True
-            logger.debug("Entered WRITING section - will skip")
+            logger.debug("Entered WRITING section - will include (Groq can handle)")
             i += 1
             continue
         
-        # Skip if in listening or writing section
-        if in_listening or in_writing:
+        # Skip if in listening section only
+        if in_listening:
             i += 1
             continue
         
-        # Only process reading section
-        if not in_reading:
+        # Only process reading or writing sections
+        if not (in_reading or in_writing):
             i += 1
             continue
         
@@ -224,7 +224,7 @@ def parse_english_mcqs(text: str) -> List[Dict]:
         
         i = j
     
-    logger.info(f"✅ English parser extracted {len(results)} reading questions (excluded listening/writing)")
+    logger.info(f"✅ English parser extracted {len(results)} questions (reading + writing, excluded listening)")
     return results
 
 def parse_physics_mcqs_improved(text: str) -> List[Dict]:
