@@ -524,6 +524,16 @@ def extract_questions_from_pdf(file_bytes: bytes, skip_ocr: bool = False) -> Lis
         if groq_mcqs:
             all_mcqs.extend(groq_mcqs)
         
+        # Try specialized physics parser first (for exam PDFs with embedded options)
+        try:
+            from improved_physics_parser import parse_physics_mcqs_improved
+            physics_mcqs = parse_physics_mcqs_improved(text)
+            if physics_mcqs:
+                logger.info(f"✅ Physics parser found {len(physics_mcqs)} MCQs")
+                all_mcqs.extend(physics_mcqs)
+        except Exception as e:
+            logger.debug(f"Physics parser not available or failed: {str(e)}")
+        
         # Try each parser and collect results
         # Note: Aggressive parser disabled as it creates malformed questions
         parsers = [
