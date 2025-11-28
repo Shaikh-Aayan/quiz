@@ -946,7 +946,7 @@ def extract_questions_from_pdf(file_bytes: bytes, skip_ocr: bool = False) -> Lis
     except Exception as e:
         logger.error(f"❌ Error in extract_questions_from_pdf: {str(e)}")
         import traceback
-        logger.debug(f"Traceback: {traceback.format_exc()}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return []
 
 
