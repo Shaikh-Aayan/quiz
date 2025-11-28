@@ -1,6 +1,0 @@
-streamlit
-pandas
-PyMuPDF
-langchain
-python-dotenv
-openai
