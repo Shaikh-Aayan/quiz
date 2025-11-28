@@ -27,6 +27,17 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 metadata = MetaData()
 
+# Create all tables on startup
+def init_db():
+    """Initialize database tables"""
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"Warning: Could not create tables: {e}")
+
+# Call on import
+init_db()
+
 
 def get_db() -> Generator:
     db = SessionLocal()
