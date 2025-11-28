@@ -87,6 +87,20 @@ class QuizResponse(BaseModel):
 def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables ensured")
+    
+    # Clean up corrupted questions (those with null answers from old uploads)
+    try:
+        db = SessionLocal()
+        corrupted = db.query(Question).filter(Question.correct_option == None).count()
+        if corrupted > 0:
+            logger.warning(f"⚠️  Found {corrupted} questions with null answers - these are corrupted from old uploads")
+            logger.info("🧹 Cleaning up corrupted questions...")
+            db.query(Question).filter(Question.correct_option == None).delete()
+            db.commit()
+            logger.info(f"✅ Deleted {corrupted} corrupted questions")
+        db.close()
+    except Exception as e:
+        logger.warning(f"Could not clean corrupted questions: {str(e)}")
 
 
 @app.exception_handler(ValueError)
