@@ -204,10 +204,12 @@ def parse_english_mcqs(text: str) -> List[Dict]:
         if question_text and len(options) >= 2:
             # Try to identify correct answer using Groq (with retry logic)
             correct_option = None
+            logger.info(f"🔍 Calling Groq for English Q{q_num}...")
             try:
                 correct_option = identify_correct_answer_with_groq(question_text, options[:4])
+                logger.info(f"✅ Groq returned: {correct_option}")
             except Exception as e:
-                logger.debug(f"Groq failed for Q{q_num}: {str(e)}")
+                logger.error(f"❌ Groq exception for English Q{q_num}: {str(e)}")
             
             results.append({
                 'question': question_text,
@@ -331,10 +333,12 @@ def parse_physics_mcqs_improved(text: str) -> List[Dict]:
         if question_text and len(options) >= 2:
             # Try to identify correct answer using Groq (with retry logic)
             correct_option = None
+            logger.info(f"🔍 Calling Groq for Physics Q{q_num}...")
             try:
                 correct_option = identify_correct_answer_with_groq(question_text, options[:4])
+                logger.info(f"✅ Groq returned: {correct_option}")
             except Exception as e:
-                logger.debug(f"Groq failed for Q{q_num}: {str(e)}")
+                logger.error(f"❌ Groq exception for Physics Q{q_num}: {str(e)}")
             
             results.append({
                 'question': question_text,
