@@ -47,6 +47,15 @@ class Question(Base):
             raise ValueError("Correct option index cannot be negative")
         return value
 
+    @property
+    def image_url(self) -> Optional[str]:
+        """Generate image URL from image_data if available"""
+        if self.image_data and self.image_type:
+            import base64
+            image_b64 = base64.b64encode(self.image_data).decode('utf-8')
+            return f"data:image/{self.image_type};base64,{image_b64}"
+        return None
+
     def to_dict(self) -> Dict[str, Any]:
         import base64
         image_url = None

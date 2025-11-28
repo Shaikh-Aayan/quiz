@@ -177,9 +177,10 @@ def parse_english_mcqs(text: str) -> List[Dict]:
             i = j
             continue
         
-        # Extract options from the block
-        option_pattern = r'([A-D])\.\s*([^A-D]*?)(?=(?:[A-D]\.|$))'
-        option_matches = list(re.finditer(option_pattern, question_block))
+        # Extract options from the block - improved pattern
+        # Match A. B. C. D. with content between them
+        option_pattern = r'([A-D])\.\s*(.+?)(?=\s+[A-D]\.\s|$)'
+        option_matches = list(re.finditer(option_pattern, question_block, re.DOTALL))
         
         if len(option_matches) < 2:
             logger.debug(f"Q{q_num}: Not enough options found")
@@ -194,10 +195,11 @@ def parse_english_mcqs(text: str) -> List[Dict]:
         options = []
         for match in option_matches:
             opt_text = match.group(2).strip()
-            opt_text = re.sub(r'\s+', ' ', opt_text)
-            opt_text = opt_text.rstrip('.')
+            opt_text = re.sub(r'\s+', ' ', opt_text)  # Normalize whitespace
+            opt_text = opt_text.rstrip('.')  # Remove trailing period
             
-            if len(opt_text) > 2 and len(opt_text) < 200:
+            # Keep options that are reasonable length
+            if len(opt_text) > 2 and len(opt_text) < 500:
                 options.append(opt_text)
         
         # Validate and add question
@@ -301,11 +303,10 @@ def parse_physics_mcqs_improved(text: str) -> List[Dict]:
             i = j
             continue
         
-        # Extract options from the block
-        # Pattern: text A. option B. option C. option D. option
-        # Find all A., B., C., D. patterns
-        option_pattern = r'([A-D])\.\s*([^A-D]*?)(?=(?:[A-D]\.|$))'
-        option_matches = list(re.finditer(option_pattern, question_block))
+        # Extract options from the block - improved pattern
+        # Match A. B. C. D. with content between them
+        option_pattern = r'([A-D])\.\s*(.+?)(?=\s+[A-D]\.\s|$)'
+        option_matches = list(re.finditer(option_pattern, question_block, re.DOTALL))
         
         if len(option_matches) < 2:
             logger.debug(f"Q{q_num}: Not enough options found")
@@ -326,7 +327,8 @@ def parse_physics_mcqs_improved(text: str) -> List[Dict]:
             opt_text = re.sub(r'\s+', ' ', opt_text)  # Normalize whitespace
             opt_text = opt_text.rstrip('.')  # Remove trailing period
             
-            if len(opt_text) > 2 and len(opt_text) < 200:
+            # Keep options that are reasonable length
+            if len(opt_text) > 2 and len(opt_text) < 500:
                 options.append(opt_text)
         
         # Validate and add question
