@@ -48,21 +48,27 @@ def run_migrations():
         
         columns = {col['name'] for col in inspector.get_columns('questions')}
         
-        with engine.connect() as conn:
+        with engine.begin() as conn:
             # Add image_data if missing
             if 'image_data' not in columns:
-                if "postgresql" in DATABASE_URL or "postgres" in DATABASE_URL:
-                    conn.execute(text("ALTER TABLE questions ADD COLUMN image_data BYTEA DEFAULT NULL"))
-                else:
-                    conn.execute(text("ALTER TABLE questions ADD COLUMN image_data BLOB DEFAULT NULL"))
-                conn.commit()
-                print("✅ Added image_data column")
+                try:
+                    if "postgresql" in DATABASE_URL or "postgres" in DATABASE_URL:
+                        conn.execute(text("ALTER TABLE questions ADD COLUMN image_data BYTEA DEFAULT NULL"))
+                    else:
+                        conn.execute(text("ALTER TABLE questions ADD COLUMN image_data BLOB DEFAULT NULL"))
+                    print("✅ Added image_data column")
+                except Exception as e:
+                    if "already exists" not in str(e) and "duplicate" not in str(e).lower():
+                        print(f"Note adding image_data: {e}")
             
             # Add image_type if missing
             if 'image_type' not in columns:
-                conn.execute(text("ALTER TABLE questions ADD COLUMN image_type VARCHAR(50) DEFAULT NULL"))
-                conn.commit()
-                print("✅ Added image_type column")
+                try:
+                    conn.execute(text("ALTER TABLE questions ADD COLUMN image_type VARCHAR(50) DEFAULT NULL"))
+                    print("✅ Added image_type column")
+                except Exception as e:
+                    if "already exists" not in str(e) and "duplicate" not in str(e).lower():
+                        print(f"Note adding image_type: {e}")
     except Exception as e:
         print(f"Migration note: {e}")  # Don't fail if columns already exist
 

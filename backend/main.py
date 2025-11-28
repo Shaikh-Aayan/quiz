@@ -219,9 +219,25 @@ async def upload_answer_key(
 
 @app.get("/questions", response_model=List[QuestionDTO])
 def list_questions(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    limit = max(1, min(limit, 200))
-    records = db.query(Question).offset(skip).limit(limit).all()
-    return records
+    try:
+        limit = max(1, min(limit, 200))
+        records = db.query(Question).offset(skip).limit(limit).all()
+        return records
+    except Exception as e:
+        logger.error(f"Error fetching questions: {str(e)}")
+        # If columns don't exist, try to migrate
+        if "no such column" in str(e) or "column" in str(e).lower():
+            logger.info("Attempting database migration...")
+            try:
+                from db import run_migrations
+                run_migrations()
+                # Try again after migration
+                records = db.query(Question).offset(skip).limit(limit).all()
+                return records
+            except Exception as migrate_err:
+                logger.error(f"Migration failed: {str(migrate_err)}")
+                raise HTTPException(status_code=500, detail="Database schema error. Please try again.")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.delete("/questions/all")
