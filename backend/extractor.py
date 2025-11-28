@@ -168,12 +168,15 @@ def parse_physics_mcqs_improved(text: str) -> List[Dict]:
         
         # Validate and add question
         if question_text and len(options) >= 2:
-            # Try to identify correct answer using Groq
+            # Try to identify correct answer using Groq (only if API key is available)
             correct_option = None
-            try:
-                correct_option = identify_correct_answer_with_groq(question_text, options[:4])
-            except Exception as e:
-                logger.debug(f"Could not identify answer for Q{q_num}: {str(e)}")
+            groq_api_key = os.getenv("GROQ_API_KEY")
+            
+            if groq_api_key:
+                try:
+                    correct_option = identify_correct_answer_with_groq(question_text, options[:4])
+                except Exception as e:
+                    logger.debug(f"Could not identify answer for Q{q_num}: {str(e)}")
             
             results.append({
                 'question': question_text,
