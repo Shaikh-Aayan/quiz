@@ -70,8 +70,10 @@ def parse_physics_mcqs_improved(text: str) -> List[Dict]:
     Format:
     1.
     Question text A. Option A B. Option B C. Option C D. Option D
-    2.
-    Next question...
+    
+    OR
+    
+    1. Question text A. Option A B. Option B C. Option C D. Option D
     
     This parser is optimized for exam PDFs with embedded options.
     """
@@ -88,24 +90,31 @@ def parse_physics_mcqs_improved(text: str) -> List[Dict]:
     while i < len(lines):
         line = lines[i]
         
-        # Look for question number pattern: "1.", "2.", etc. (just the number)
-        q_match = re.match(r'^(\d+)\.\s*$', line)
+        # Look for question number pattern: "1.", "2.", etc.
+        # Match both "1." alone and "1. text"
+        q_match = re.match(r'^(\d+)\.\s*(.*?)$', line)
         
         if not q_match:
             i += 1
             continue
         
         q_num = int(q_match.group(1))
+        first_line_text = q_match.group(2).strip()
         
         # Collect lines until next question number
         question_block_lines = []
+        
+        # If there's text on the same line as the question number, add it
+        if first_line_text:
+            question_block_lines.append(first_line_text)
+        
         j = i + 1
         
         while j < len(lines):
             next_line = lines[j]
             
             # Stop if we hit another question number
-            if re.match(r'^\d+\.\s*$', next_line):
+            if re.match(r'^\d+\.\s*', next_line):
                 break
             
             if next_line.strip():
