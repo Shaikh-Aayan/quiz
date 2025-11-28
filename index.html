@@ -808,13 +808,6 @@
             showMessage(msg, "error");
         }
 
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
         // ===== QUIZ LOGIC =====
         async function loadQuestions() {
             const questions = await fetchQuestions();
@@ -855,16 +848,16 @@
             if (q.image_url) {
                 imageSection = `
                     <div class="mb-6 border border-cyan-500/30 rounded-lg p-4 bg-black/50">
-                        <img src="${q.image_url}" alt="Question diagram" class="max-w-full h-auto rounded-lg mx-auto" style="max-height: 400px;">
+                        <img src="${q.image_url}" alt="Question diagram" class="max-w-full h-auto rounded-lg mx-auto" style="max-height: 400px; object-fit: contain;">
                     </div>
                 `;
             }
             
             slideContent.innerHTML = `
                 <div class="flex items-start justify-between mb-6">
-                    <div>
+                    <div class="flex-1">
                         <div class="badge mb-3">Question ${currentQuestionIndex + 1}/${allQuestions.length}</div>
-                        <p class="text-2xl font-semibold text-gray-100">${escapeHtml(q.question)}</p>
+                        <p class="text-2xl font-semibold text-gray-100 whitespace-pre-wrap break-words">${q.question}</p>
                     </div>
                 </div>
                 
@@ -872,9 +865,9 @@
                 
                 <div class="space-y-3 mb-6" id="options-container">
                     ${(q.options || []).map((opt, i) => `
-                        <label class="option-neutral flex items-center gap-3 cursor-pointer" onclick="selectOption(${i})">
-                            <input type="radio" name="answer" value="${i}" class="w-4 h-4">
-                            <span class="flex-1 text-lg">${escapeHtml(opt)}</span>
+                        <label class="option-neutral flex items-center gap-3 cursor-pointer">
+                            <input type="radio" name="answer" value="${i}" class="w-4 h-4" onchange="selectOption(${i})">
+                            <span class="flex-1 text-lg whitespace-pre-wrap break-words">${opt}</span>
                         </label>
                     `).join("")}
                 </div>
@@ -967,7 +960,7 @@
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
-                hintDiv.innerHTML = `<strong class="text-purple-300">💡 Hint:</strong><br>${escapeHtml(data.hint || "No hint available")}`;
+                hintDiv.innerHTML = `<strong class="text-purple-300">💡 Hint:</strong><br>${data.hint || "No hint available"}`;
             } catch (err) {
                 console.error("Hint error:", err);
                 hintDiv.innerHTML = `<strong class="text-red-300">⚠️ Error: ${err.message}</strong>`;
@@ -987,7 +980,7 @@
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
-                expDiv.innerHTML = `<strong class="text-blue-300">📖 Explanation:</strong><br>${escapeHtml(data.explanation || "No explanation available")}`;
+                expDiv.innerHTML = `<strong class="text-blue-300">📖 Explanation:</strong><br>${data.explanation || "No explanation available"}`;
             } catch (err) {
                 console.error("Explanation error:", err);
                 expDiv.innerHTML = `<strong class="text-red-300">⚠️ Error: ${err.message}</strong>`;
@@ -1068,10 +1061,12 @@
             
             // Show visual feedback
             const options = document.querySelectorAll("#options-container label");
-            options[picked].classList.add(isCorrect ? "option-correct" : "option-wrong");
+            if (options[picked]) {
+                options[picked].classList.add(isCorrect ? "option-correct" : "option-wrong");
+            }
             
             // Show correct answer if wrong
-            if (!isCorrect && q.correct_option !== undefined) {
+            if (!isCorrect && q.correct_option !== undefined && options[q.correct_option]) {
                 options[q.correct_option].classList.add("show-correct-answer");
             }
             
@@ -1093,7 +1088,7 @@
                     btn.disabled = false; // Re-enable for next question
                     renderCurrentQuestion();
                 }
-            }, 1500);
+            }, 2000);
         };
 
         document.getElementById("prevBtn").onclick = () => {
