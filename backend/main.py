@@ -148,8 +148,7 @@ async def upload_pdf(
     saved = 0
     for record in parsed_questions:
         try:
-            # Store all question data EXCEPT image data (too large)
-            # Images will be extracted on-the-fly when needed
+            # Store all question data INCLUDING image data if available
             question = Question(
                 question=record.get("question"),
                 options=record.get("options", []),
@@ -157,12 +156,13 @@ async def upload_pdf(
                 explanation=record.get("explanation", ""),
                 source_file=file.filename,
                 page_no=record.get("page_no"),
-                image_data=None,  # Don't store image data - too large
-                image_type=None,  # Don't store image type
+                image_data=record.get("image_data"),  # Store image if available
+                image_type=record.get("image_type"),  # Store image type if available
             )
             db.add(question)
             saved += 1
-            logger.debug(f"Saved Q: {record.get('question')[:40]}... Answer: {record.get('correct_option')}")
+            has_image = "✓" if record.get("image_data") else "✗"
+            logger.debug(f"Saved Q: {record.get('question')[:40]}... Answer: {record.get('correct_option')} Image: {has_image}")
         except Exception as exc:  # noqa: BLE001
             logger.error(f"Failed to persist question: {str(exc)}", exc_info=exc)
 
