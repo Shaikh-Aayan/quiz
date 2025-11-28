@@ -202,15 +202,9 @@ def parse_english_mcqs(text: str) -> List[Dict]:
         
         # Validate and add question
         if question_text and len(options) >= 2:
-            # Try to identify correct answer using Groq (only if API key is available)
+            # Don't try to identify answers with Groq - it's unreliable
+            # Just save the question and let users answer it
             correct_option = None
-            groq_api_key = os.getenv("GROQ_API_KEY")
-            
-            if groq_api_key:
-                try:
-                    correct_option = identify_correct_answer_with_groq(question_text, options[:4])
-                except Exception as e:
-                    logger.debug(f"Could not identify answer for Q{q_num}: {str(e)}")
             
             results.append({
                 'question': question_text,
@@ -218,7 +212,7 @@ def parse_english_mcqs(text: str) -> List[Dict]:
                 'correct_option': correct_option,
                 'explanation': ''
             })
-            logger.info(f"✅ Q{q_num}: {question_text[:60]}... | {len(options)} options | Answer: {correct_option}")
+            logger.info(f"✅ Q{q_num}: {question_text[:60]}... | {len(options)} options")
         else:
             logger.debug(f"Q{q_num}: Invalid - text_len={len(question_text)} opts={len(options)}")
         
@@ -332,15 +326,9 @@ def parse_physics_mcqs_improved(text: str) -> List[Dict]:
         
         # Validate and add question
         if question_text and len(options) >= 2:
-            # Try to identify correct answer using Groq (only if API key is available)
+            # Don't try to identify answers with Groq - it's unreliable
+            # Just save the question and let users answer it
             correct_option = None
-            groq_api_key = os.getenv("GROQ_API_KEY")
-            
-            if groq_api_key:
-                try:
-                    correct_option = identify_correct_answer_with_groq(question_text, options[:4])
-                except Exception as e:
-                    logger.debug(f"Could not identify answer for Q{q_num}: {str(e)}")
             
             results.append({
                 'question': question_text,
@@ -348,7 +336,7 @@ def parse_physics_mcqs_improved(text: str) -> List[Dict]:
                 'correct_option': correct_option,
                 'explanation': ''
             })
-            logger.info(f"✅ Q{q_num}: {question_text[:60]}... | {len(options)} options | Answer: {correct_option}")
+            logger.info(f"✅ Q{q_num}: {question_text[:60]}... | {len(options)} options")
         else:
             logger.debug(f"Q{q_num}: Invalid - text_len={len(question_text)} opts={len(options)}")
         
