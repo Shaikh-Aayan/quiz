@@ -1280,8 +1280,10 @@ def identify_correct_answer_with_groq(question: str, options: List[str]) -> Opti
     
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
-        logger.debug("GROQ_API_KEY not set, returning None")
+        logger.error("❌ GROQ_API_KEY not set!")
         return None
+    
+    logger.debug(f"✅ Groq API key found, attempting to identify answer for: {question[:50]}...")
     
     max_retries = 3
     retry_delay = 1  # Start with 1 second
@@ -1326,6 +1328,7 @@ Respond with ONLY: ANSWER: A (or B, C, D, etc.)"""
             
         except Exception as e:
             error_str = str(e).lower()
+            logger.error(f"❌ Attempt {attempt+1}/{max_retries} failed: {str(e)[:100]}")
             
             # Check for rate limit
             if "429" in error_str or "rate" in error_str or "too many" in error_str:
@@ -1338,7 +1341,8 @@ Respond with ONLY: ANSWER: A (or B, C, D, etc.)"""
                     logger.error(f"❌ Rate limited after {max_retries} attempts")
                     return None
             else:
-                logger.error(f"❌ Groq error: {str(e)}")
+                logger.error(f"❌ Groq error (non-rate-limit): {str(e)[:200]}")
                 return None
     
+    logger.error(f"❌ All {max_retries} attempts exhausted")
     return None
