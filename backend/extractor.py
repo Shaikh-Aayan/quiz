@@ -62,6 +62,117 @@ class PDFExtractionError(Exception):
     """Custom exception for PDF extraction errors."""
     pass
 
+def parse_physics_mcqs_improved(text: str) -> List[Dict]:
+    """
+    Parse MCQs from Physics exam PDF where options are embedded in question text.
+    
+    Format:
+    1.
+    Question text A. Option A B. Option B C. Option C D. Option D
+    2.
+    Next question...
+    
+    This parser is optimized for exam PDFs with embedded options.
+    """
+    
+    if not text or len(text) < 50:
+        logger.debug("Text too short for physics parser")
+        return []
+    
+    results = []
+    lines = text.split('\n')
+    lines = [l.strip() for l in lines]
+    
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        
+        # Look for question number pattern: "1.", "2.", etc. (just the number)
+        q_match = re.match(r'^(\d+)\.\s*$', line)
+        
+        if not q_match:
+            i += 1
+            continue
+        
+        q_num = int(q_match.group(1))
+        
+        # Collect lines until next question number
+        question_block_lines = []
+        j = i + 1
+        
+        while j < len(lines):
+            next_line = lines[j]
+            
+            # Stop if we hit another question number
+            if re.match(r'^\d+\.\s*$', next_line):
+                break
+            
+            if next_line.strip():
+                question_block_lines.append(next_line)
+            
+            j += 1
+        
+        # Join all lines in the block
+        question_block = ' '.join(question_block_lines)
+        
+        # Skip instructions
+        if any(keyword in question_block.lower() for keyword in 
+               ['read each question', 'answer the questions', 'answer sheet', 'calculator if you wish', 
+                'write anything', 'erase the first', 'grid black out']):
+            logger.debug(f"Skipping instruction Q{q_num}")
+            i = j
+            continue
+        
+        # Skip if too short
+        if len(question_block) < 10:
+            i = j
+            continue
+        
+        # Extract options from the block
+        # Pattern: text A. option B. option C. option D. option
+        # Find all A., B., C., D. patterns
+        option_pattern = r'([A-D])\.\s*([^A-D]*?)(?=(?:[A-D]\.|$))'
+        option_matches = list(re.finditer(option_pattern, question_block))
+        
+        if len(option_matches) < 2:
+            logger.debug(f"Q{q_num}: Not enough options found")
+            i = j
+            continue
+        
+        # Find where options start (first A.)
+        first_option_pos = option_matches[0].start()
+        question_text = question_block[:first_option_pos].strip()
+        
+        # Extract options
+        options = []
+        for match in option_matches:
+            opt_letter = match.group(1)
+            opt_text = match.group(2).strip()
+            
+            # Clean up option text
+            opt_text = re.sub(r'\s+', ' ', opt_text)  # Normalize whitespace
+            opt_text = opt_text.rstrip('.')  # Remove trailing period
+            
+            if len(opt_text) > 2 and len(opt_text) < 200:
+                options.append(opt_text)
+        
+        # Validate and add question
+        if question_text and len(options) >= 2:
+            results.append({
+                'question': question_text,
+                'options': options[:4],  # Max 4 options
+                'correct_option': None,
+                'explanation': ''
+            })
+            logger.info(f"✅ Q{q_num}: {question_text[:60]}... | {len(options)} options")
+        else:
+            logger.debug(f"Q{q_num}: Invalid - text_len={len(question_text)} opts={len(options)}")
+        
+        i = j
+    
+    logger.info(f"✅ Physics parser extracted {len(results)} questions")
+    return results
+
 def is_pdf_corrupted(file_bytes: bytes) -> bool:
     """Check if the PDF is corrupted."""
     try:
@@ -501,56 +612,35 @@ def extract_questions_from_pdf(file_bytes: bytes, skip_ocr: bool = False) -> Lis
         logger.info("Cleaning and normalizing extracted text...")
         text = clean_text(text)
         
-        # Try Groq-based extraction first (most reliable when it works)
-        logger.info("Trying Groq-based extraction...")
+        # Try specialized physics parser first (for exam PDFs with embedded options)
+        # This is the PRIMARY parser for exam PDFs
+        logger.info("Trying improved physics parser (for exam PDFs)...")
+        physics_mcqs = parse_physics_mcqs_improved(text)
+        
+        if physics_mcqs and len(physics_mcqs) >= 5:
+            logger.info(f"✅ Physics parser found {len(physics_mcqs)} MCQs - using this")
+            return physics_mcqs
+        
+        # Fallback: Try Groq-based extraction if physics parser didn't find enough
+        logger.info("Physics parser found < 5 questions, trying Groq...")
         groq_mcqs = validate_and_structure_with_groq(text)
         
-        if groq_mcqs:
+        if groq_mcqs and len(groq_mcqs) >= 5:
             logger.info(f"✅ Extracted {len(groq_mcqs)} questions using Groq")
-            # Check if Groq might have missed questions by counting question marks
-            question_count = text.count('?')
-            if len(groq_mcqs) < question_count:
-                logger.warning(f"⚠️ Groq found {len(groq_mcqs)} but text has {question_count} questions - may be missing some")
-                logger.info("Falling back to rule-based parsers to find missing questions...")
-            else:
-                return groq_mcqs
-        else:
-            logger.info("Groq extraction returned no questions, falling back to rule-based parsers...")
+            return groq_mcqs
         
-        # Parse the extracted text into MCQs using multiple parsers
+        # Final fallback: Try primary parser only (NOT fallback parser - it adds garbage)
+        logger.info("Groq found < 5 questions, trying primary parser...")
         all_mcqs = []
         
-        # Add Groq results if we have them
-        if groq_mcqs:
-            all_mcqs.extend(groq_mcqs)
-        
-        # Try specialized physics parser first (for exam PDFs with embedded options)
         try:
-            from improved_physics_parser import parse_physics_mcqs_improved
-            physics_mcqs = parse_physics_mcqs_improved(text)
-            if physics_mcqs:
-                logger.info(f"✅ Physics parser found {len(physics_mcqs)} MCQs")
-                all_mcqs.extend(physics_mcqs)
+            logger.info("Trying Primary Parser...")
+            parsed_mcqs = parse_mcqs_from_text(text)
+            if parsed_mcqs:
+                logger.info(f"✅ Primary Parser found {len(parsed_mcqs)} MCQs")
+                all_mcqs.extend(parsed_mcqs)
         except Exception as e:
-            logger.debug(f"Physics parser not available or failed: {str(e)}")
-        
-        # Try each parser and collect results
-        # Note: Aggressive parser disabled as it creates malformed questions
-        parsers = [
-            ("Primary Parser", parse_mcqs_from_text),
-            ("Fallback Parser", fallback_block_parser),
-            # ("Aggressive Parser", aggressive_parser)  # Disabled - creates malformed questions
-        ]
-        
-        for parser_name, parser_func in parsers:
-            try:
-                logger.info(f"Trying {parser_name}...")
-                parsed_mcqs = parser_func(text)
-                if parsed_mcqs:
-                    logger.info(f"✅ {parser_name} found {len(parsed_mcqs)} MCQs")
-                    all_mcqs.extend(parsed_mcqs)
-            except Exception as e:
-                logger.warning(f"{parser_name} failed: {str(e)}")
+            logger.warning(f"Primary Parser failed: {str(e)}")
         
         # If we found MCQs with any parser, use them
         if all_mcqs:
