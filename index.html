@@ -898,7 +898,9 @@
 
         function selectOption(index) {
             const q = allQuestions[currentQuestionIndex];
-            quizState.answers[q.id] = index;
+            // Use question index as key if id doesn't exist
+            const qKey = q.id !== undefined ? q.id : currentQuestionIndex;
+            quizState.answers[qKey] = index;
             
             const options = document.querySelectorAll("#options-container label");
             options.forEach((opt, i) => {
@@ -1041,14 +1043,17 @@
             if (btn.disabled) return; // Prevent multiple clicks
             
             const q = allQuestions[currentQuestionIndex];
-            if (quizState.answers[q.id] === undefined) {
+            // Use question index as key if id doesn't exist
+            const qKey = q.id !== undefined ? q.id : currentQuestionIndex;
+            
+            if (quizState.answers[qKey] === undefined) {
                 showError("Please select an answer first!");
                 return;
             }
             
             btn.disabled = true; // Disable button immediately
             
-            const picked = quizState.answers[q.id];
+            const picked = quizState.answers[qKey];
             const isCorrect = picked === q.correct_option;
             
             // Update score if correct
